@@ -2084,7 +2084,7 @@
 
         // --- SERIALIZACIÓN COMPACTA Y CODIFICACIÓN BASE64URL PARA ENLACES AUTOCONTENIDOS ---
         function compactarDoc(payload) {
-            return {
+            const c = {
                 id: payload.id || '',
                 sid: payload.short_id || '',
                 t: payload.tipo === 'Presupuesto' ? 'P' : 'F',
@@ -2104,18 +2104,25 @@
                     ma: payload.vehiculo?.matricula || '',
                     km: payload.vehiculo?.km || ''
                 },
-                i: (payload.conceptos || []).map(item => [
-                    item.cantidad || 1,
-                    item.descripcion || item.concepto || '',
-                    item.precio || 0,
-                    item.total || 0
-                ]),
+                i: (payload.conceptos || [])
+                    .filter(item => (item.descripcion || item.concepto || '').trim() || parseFloat(item.total) > 0)
+                    .map(item => [
+                        item.cantidad || 1,
+                        item.descripcion || item.concepto || '',
+                        parseFloat(item.precio) || 0,
+                        parseFloat(item.total) || 0
+                    ]),
                 b: payload.base || '0.00',
                 iva: payload.iva || '0.00',
                 tot: payload.total || '0.00',
                 ai: payload.aplicaIva ? 1 : 0,
                 obs: payload.observaciones || ''
             };
+            // Eliminar claves vacías para reducir tamaño del payload al mínimo posible
+            for (const k in c.c) if (!c.c[k]) delete c.c[k];
+            for (const k in c.v) if (!c.v[k]) delete c.v[k];
+            if (!c.obs) delete c.obs;
+            return c;
         }
 
         function descompactarDoc(c) {
@@ -2185,6 +2192,27 @@
                 console.warn('[DocPayload] Error decodificando:', e);
                 return null;
             }
+        }
+
+        // --- ACORTADOR DE ENLACES ULTRA-CORTO PARA WHATSAPP ---
+        async function acortarUrl(urlLarga) {
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3500);
+                const res = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(urlLarga)}`, {
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+                if (res.ok) {
+                    const txt = await res.text();
+                    if (txt && txt.startsWith('http')) {
+                        return txt.trim();
+                    }
+                }
+            } catch (e) {
+                console.warn('[Acortador] Usando URL completa como respaldo:', e?.message || e);
+            }
+            return urlLarga;
         }
 
         // Toast de notificación en pantalla
@@ -2424,9 +2452,21 @@
                 // Construir URL limpia del documento con datos autocontenidos
                 const baseUrl = window.location.origin;
                 const encodedData = encodeDocPayload(docPayload);
-                const urlDoc = encodedData 
+                const urlCompleta = encodedData 
                     ? `${baseUrl}/p/${docShortId}?d=${encodedData}` 
                     : `${baseUrl}/p/${docShortId}`;
+
+                // Acortar enlace automáticamente para WhatsApp a la versión más corta posible
+                let urlDoc = urlCompleta;
+                try {
+                    if (btnGuardar) btnGuardar.innerHTML = 'Acortando enlace...';
+                    const acortada = await acortarUrl(urlCompleta);
+                    if (acortada && acortada.startsWith('http')) {
+                        urlDoc = acortada;
+                    }
+                } catch (e) {
+                    console.warn('[Acortador] Error acortando URL, usando URL completa:', e);
+                }
 
                 // 3. Cambiar estado lógico a "guardado"
                 estadoDocumentos[tipo] = {
@@ -2434,6 +2474,7 @@
                     id: docId,
                     shortId: docShortId,
                     url: urlDoc,
+                    urlCompleta: urlCompleta,
                     datos: docPayload
                 };
 
