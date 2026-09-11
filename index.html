@@ -1,24 +1,3015 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>GESTARIAN DM CAR</title>
-    <meta name="description" content="Sistema ERP integral para talleres mecánicos, chapa y pintura con gestión de clientes, presupuestos, citas, facturas y asistente METIS" />
-    <meta property="og:title" content="GESTARIAN DM CAR" />
-    <meta property="og:description" content="Sistema ERP integral para talleres mecánicos, chapa y pintura con gestión de clientes, presupuestos, citas, facturas y asistente METIS" />
-    <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="theme-color" content="#020617" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700;800&family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Orbitron:wght@700;800;900&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
-  </head>
-  <body class="bg-slate-950 text-white overflow-x-hidden">
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestarian Lite - DM CAR</title>
+    <!-- Cliente Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --dm-black: #0d0d0d;
+            --dm-red: #e3000f;
+            --dm-gray-bg: #e2e2e2;
+            --dm-gray-border: #999;
+            --dm-text-light: #fff;
+            --dm-text-dark: #000;
+            --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body { 
+            font-family: var(--font-main); 
+            background-color: #000; 
+            background-image: url('/public/images/backgrounds/background_portrait.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            display: flex; 
+            justify-content: center; 
+            align-items: flex-start; 
+            min-height: 100vh; 
+            margin: 0; 
+            padding: 20px;
+            box-sizing: border-box;
+            color: var(--dm-text-dark);
+        }
+        @media (orientation: landscape), (min-width: 1024px) {
+            body {
+                background-image: url('/public/images/backgrounds/background_landscape.jpg');
+            }
+            #widget-tiempo {
+                position: absolute !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 0 !important;
+                pointer-events: none !important;
+            }
+            #bloque-reloj {
+                position: absolute !important;
+                top: 25px !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                pointer-events: auto !important;
+                z-index: 15 !important;
+            }
+            #bloque-clima {
+                position: absolute !important;
+                top: 17px !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                width: auto !important;
+                margin-top: 0 !important;
+                display: flex !important;
+                gap: 40px !important;
+                justify-content: center !important;
+                align-items: flex-end !important;
+                pointer-events: auto !important;
+                z-index: 15 !important;
+            }
+            #vista-acceso {
+                min-height: 100vh !important;
+                padding-top: 0 !important;
+                gap: 20px !important;
+                justify-content: center !important;
+                align-items: center !important;
+            }
+            #vista-menu {
+                position: absolute !important;
+                bottom: 10px !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                width: 100% !important;
+                min-height: auto !important;
+                padding: 0 !important;
+                gap: 20px !important;
+            }
+            #user-email.glass-input {
+                margin: -55px 0 0 0 !important;
+                height: 48px !important;
+                background: rgba(0, 0, 0, 0.3) !important;
+            }
+            .glass-btn {
+                position: static !important;
+                transform: none !important;
+                margin: 0 !important;
+            }
+            #brand-gestarian {
+                bottom: 10px !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+            }
+            #contenedor-privacidad {
+                bottom: 10px !important;
+                left: auto !important;
+                right: 30px !important;
+                width: auto !important;
+                text-align: right !important;
+            }
+            #btn-config-pantalla2 {
+                top: 31px !important;
+                left: 10px !important;
+            }
+            #btn-volver-pantalla1 {
+                top: 31px !important;
+                right: 10px !important;
+            }
+        }
+        .card { 
+            background: #fff; 
+            border-radius: 8px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5); 
+            width: 100%; 
+            max-width: 800px; 
+            overflow: hidden; 
+            border-bottom: 5px solid #666666; 
+            margin: 0 auto 20px auto;
+        }
+        .menu-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            min-height: 80vh;
+            gap: 40px;
+            padding-top: 80px;
+        }
+        #vista-menu {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 20px;
+            min-height: auto;
+            padding: 0;
+            z-index: 20;
+            box-sizing: border-box;
+        }
+        .btn-menu-big {
+            width: 90%;
+            max-width: 400px;
+            padding: 26px 20px;
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            text-transform: uppercase;
+            cursor: pointer;
+            color: #fff;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #fff;
+            border-radius: 12px;
+            box-shadow: 0 0 15px var(--dm-red);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            transition: all 0.3s ease;
+        }
+        .btn-menu-big:hover {
+            box-shadow: 0 0 25px var(--dm-red), inset 0 0 15px rgba(227, 0, 15, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .glass-btn {
+            font-size: 27px;
+            font-weight: 300;
+            padding: 15px 30px;
+            max-width: 300px;
+            box-shadow: 0 0 20px var(--dm-red);
+            position: absolute;
+            bottom: 85px;
+            left: 50%;
+            transform: translateX(-50%);
+            margin: 0;
+            color: #fff;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #fff;
+            border-radius: 12px;
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            z-index: 50;
+            pointer-events: auto;
+        }
+        .glass-btn:hover {
+            box-shadow: 0 0 32px var(--dm-red), inset 0 0 20px rgba(227, 0, 15, 0.4);
+        }
+        .glass-input {
+            width: 90%;
+            max-width: 380px;
+            height: 48px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: 600;
+            padding: 8px 15px;
+            margin-top: -70px; 
+            margin-bottom: 0px;
+            color: #fff;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid #fff;
+            border-radius: 12px;
+            box-shadow: 0 0 20px var(--dm-red);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+            font-family: inherit;
+            position: relative;
+            z-index: 30;
+            pointer-events: auto;
+        }
+        .glass-input:focus {
+            outline: none;
+            box-shadow: 0 0 32px var(--dm-red), inset 0 0 20px rgba(227, 0, 15, 0.4);
+            background: rgba(0, 0, 0, 0.45);
+        }
+        .glass-input::placeholder {
+            color: #ffffff;
+            text-align: center;
+            font-size: 17px;
+            font-weight: 600;
+            opacity: 0.95;
+        }
 
+        /* --- BOTÓN CONFIGURACIÓN EN EL HEADER (A LA IZQUIERDA DE LA HORA, A 10PX DEL BORDE IZQUIERDO) --- */
+        #btn-config-pantalla2 {
+            position: fixed;
+            top: 31px;
+            left: 10px;
+            width: 38px;
+            height: 38px;
+            min-width: 38px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 0 15px var(--dm-red);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            transition: all 0.2s ease;
+            padding: 0;
+            z-index: 1000;
+            pointer-events: auto;
+        }
+        #btn-config-pantalla2:hover {
+            background: rgba(227, 0, 15, 0.35) !important;
+            border-color: #ffffff !important;
+            box-shadow: 0 0 25px var(--dm-red) !important;
+            transform: scale(1.08);
+        }
+
+        /* --- BOTÓN VOLVER EN EL HEADER (A LA DERECHA DE LA HORA, A 10PX DEL BORDE DERECHO) --- */
+        #btn-volver-pantalla1 {
+            position: fixed;
+            top: 31px;
+            right: 10px;
+            width: 38px;
+            height: 38px;
+            min-width: 38px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 0 15px var(--dm-red);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            transition: all 0.2s ease;
+            padding: 0;
+            z-index: 1000;
+            pointer-events: auto;
+        }
+        #btn-volver-pantalla1:hover {
+            background: rgba(227, 0, 15, 0.35) !important;
+            border-color: #ffffff !important;
+            box-shadow: 0 0 25px var(--dm-red) !important;
+            transform: scale(1.08);
+        }
+
+        /* --- NAVEGACIÓN Y ESTRUCTURA DE PÁGINAS SCROLL --- */
+        body.modo-documento {
+            background-color: #ffffff !important;
+            background-image: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            display: block !important;
+            min-height: 100vh;
+            height: 100vh;
+            overflow: hidden;
+        }
+        #contenedor-app-paginas {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: #ffffff;
+        }
+        .nav-paginas-fija {
+            position: sticky;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: #1e1e1e;
+            display: flex;
+            align-items: center;
+            padding: 6px 10px;
+            box-sizing: border-box;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            flex-shrink: 0;
+        }
+        .nav-tabs-wrapper {
+            display: flex;
+            flex: 1;
+            justify-content: space-around;
+            padding-right: 48px;
+        }
+        .nav-tab {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #aaaaaa;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 8px 4px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-family: inherit;
+        }
+        .nav-tab.active {
+            background: #333333;
+            color: #ffffff;
+            border-bottom: 3px solid #e3000f;
+        }
+        .scroll-paginas-container {
+            display: flex;
+            flex-direction: row;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            width: 100%;
+            flex: 1;
+            height: calc(100vh - 52px);
+        }
+        .pagina-item {
+            flex: 0 0 100%;
+            width: 100%;
+            max-width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            scroll-snap-align: start;
+            scroll-snap-stop: always;
+            box-sizing: border-box;
+            padding: 12px 10px 40px 10px;
+            background: #f7f7f7;
+        }
+        .pagina-item .card {
+            box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+            border-bottom: 5px solid #666666;
+        }
+
+        /* --- ESTILO DOCUMENTOS OFICIALES DM CAR (PRESUPUESTO Y FACTURA) --- */
+        .cabecera-wrapper {
+            width: 100%;
+            background: #ffffff;
+            padding: 4px 8px;
+            box-sizing: border-box;
+            text-align: center;
+            border-bottom: 2px solid #e5e5e5;
+        }
+        .doc-banner-header {
+            width: 100%;
+            max-width: 760px;
+            max-height: 315px;
+            height: auto;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto;
+        }
+        .pie-wrapper {
+            width: 100%;
+            background: #ffffff;
+            padding: 4px 0 2px 0;
+            text-align: center;
+            margin-top: 4px;
+            border-top: 1px solid #eeeeee;
+        }
+        .doc-banner-footer {
+            width: 100%;
+            max-width: 760px;
+            max-height: 160px;
+            height: auto;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto;
+        }
+        .doc-slogan-red {
+            color: #e3000f;
+            font-weight: 800;
+            font-size: 9.5px;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+            font-family: inherit;
+        }
+        .doc-pie-text-red {
+            font-size: 10.5px;
+            font-weight: 800;
+            color: #e3000f;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-top: 3px;
+            text-align: center;
+        }
+        @media (max-width: 500px) {
+            .doc-slogan-red {
+                display: none;
+            }
+        }
+        .form-content { padding: 4px 12px; }
+
+        /* Banner de Título (PRESUPUESTO / FACTURA) con acento rojo y Nº/Fecha */
+        .doc-header-banner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 4px 0 6px 0;
+            padding: 0 2px;
+        }
+        .doc-title-badge {
+            display: inline-flex;
+            align-items: stretch;
+            background: #808080;
+            color: #ffffff;
+            border-radius: 2px 0 0 2px;
+            overflow: hidden;
+            height: 32px;
+        }
+        .doc-title-badge span {
+            font-size: 19px;
+            font-weight: 900;
+            letter-spacing: 1.2px;
+            padding: 0 16px 0 12px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            line-height: 1;
+        }
+        .red-slash-right {
+            width: 16px;
+            background: #e3000f;
+            transform: skewX(-25deg);
+            margin-right: -8px;
+        }
+        .doc-meta-fields {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .meta-row {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 6px;
+        }
+        .meta-row label {
+            font-size: 10px;
+            font-weight: 800;
+            color: #444444;
+            letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+        }
+        .meta-row label::before {
+            content: '';
+            display: inline-block;
+            width: 3px;
+            height: 8px;
+            background: #e3000f;
+            border-radius: 1px;
+            flex-shrink: 0;
+        }
+        .doc-meta-input {
+            width: 85px;
+            height: 20px;
+            background-color: #e6e8eb !important;
+            border: 1px solid #c4c7cc !important;
+            border-radius: 2px;
+            padding: 1px 4px;
+            font-size: 11px;
+            font-weight: 700;
+            text-align: center;
+            color: #333333;
+        }
+
+        /* Banners de Sección con acento rojo diagonal */
+        .section-banner {
+            display: flex;
+            align-items: stretch;
+            background: #808080;
+            color: #ffffff;
+            margin: 5px 0 3px 0;
+            border-radius: 2px;
+            overflow: hidden;
+            height: 20px;
+        }
+        .red-slash-left {
+            width: 11px;
+            background: #e3000f;
+            transform: skewX(-25deg);
+            margin-left: -5px;
+            margin-right: 7px;
+            flex-shrink: 0;
+        }
+        .section-banner span {
+            font-size: 9.5px;
+            font-weight: 800;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Inputs y Campos de Datos */
+        .input-group { display: flex; gap: 5px; margin-bottom: 3px; }
+        .input-field { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .input-field label {
+            font-size: 8px; font-weight: 800; margin-bottom: 1px;
+            color: #444444; text-transform: uppercase;
+            line-height: 1; letter-spacing: 0.3px;
+            display: inline-flex;
+            align-items: center;
+            gap: 3.5px;
+        }
+        .input-field label::before {
+            content: '';
+            display: inline-block;
+            width: 3px;
+            height: 8px;
+            background: #e3000f;
+            border-radius: 1px;
+            flex-shrink: 0;
+        }
+        .doc-input-box {
+            background-color: #e6e8eb !important;
+            border: 1px solid #c4c7cc !important;
+            border-radius: 2px;
+            height: 22px;
+            padding: 2px 5px;
+            font-size: 10.5px;
+            color: #333333;
+            box-sizing: border-box;
+            width: 100%;
+        }
+        .doc-input-box:focus {
+            background-color: #ffffff !important;
+            outline: 2px solid #808080;
+        }
+
+        /* Fila de Vehículo en una sola línea */
+        .vehiculo-inline {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 3px;
+            flex-wrap: nowrap !important;
+        }
+        .vehiculo-inline .input-field {
+            flex: 1;
+            min-width: 0;
+        }
+
+        /* Tabla de Desglose de Trabajos */
+        .tabla-desglose {
+            width: 100%;
+            margin-top: 4px;
+        }
+        .desglose-header-custom {
+            display: flex;
+            background-color: #808080;
+            color: #ffffff;
+            font-weight: 800;
+            font-size: 9.5px;
+            letter-spacing: 0.5px;
+            text-align: center;
+            height: 21px;
+            align-items: center;
+            border-radius: 2px 2px 0 0;
+        }
+        .desglose-header-custom div {
+            padding: 0 4px;
+            border-right: 1px solid #a0a0a0;
+        }
+        .desglose-header-custom div:last-child {
+            border-right: none;
+        }
+        .desglose-row-custom {
+            display: flex;
+            gap: 2px;
+            margin-top: 2px;
+        }
+        .desglose-row-custom input {
+            background-color: #f1f3f5;
+            border: 1px solid #c4c7cc;
+            border-radius: 0;
+            height: 21px;
+            font-size: 10.5px;
+            padding: 2px 4px;
+            box-sizing: border-box;
+        }
+        .desglose-row-custom input:focus {
+            background-color: #ffffff;
+            outline: 1px solid #808080;
+        }
+        .col-c-cant { width: 12%; text-align: center; }
+        .col-c-desc { flex: 1; text-align: left; }
+        .col-c-precio { width: 18%; text-align: right; }
+        .col-c-total { width: 18%; text-align: right; background-color: #e6e8eb !important; font-weight: 700; }
+
+        /* Observaciones y Totales */
+        .obs-totales-wrapper-custom {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 10px;
+            margin-top: 5px;
+        }
+        .obs-box-custom {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        .obs-label-custom {
+            font-size: 8.5px;
+            font-weight: 800;
+            color: #444444;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+            letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 3.5px;
+        }
+        .obs-label-custom::before {
+            content: '';
+            display: inline-block;
+            width: 3px;
+            height: 8px;
+            background: #e3000f;
+            border-radius: 1px;
+            flex-shrink: 0;
+        }
+        .obs-textarea-custom {
+            width: 100%;
+            height: 100%;
+            min-height: 56px;
+            background-color: #e6e8eb;
+            border: 1px solid #c4c7cc;
+            border-radius: 2px;
+            padding: 4px 6px;
+            font-size: 10.5px;
+            resize: none;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+        .totales-box-custom {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 2px;
+            width: 185px;
+            flex-shrink: 0;
+        }
+        .total-row-custom {
+            display: flex;
+            width: 100%;
+            height: 23px;
+            align-items: stretch;
+        }
+        .total-badge-custom {
+            display: flex;
+            align-items: center;
+            background: #808080;
+            color: #ffffff;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 0 8px 0 0;
+            flex: 1;
+            overflow: hidden;
+            border-radius: 2px 0 0 2px;
+            letter-spacing: 0.5px;
+        }
+        .total-badge-custom .red-slash-mini {
+            width: 8px;
+            height: 100%;
+            background: #e3000f;
+            transform: skewX(-25deg);
+            margin-left: -4px;
+            margin-right: 6px;
+            flex-shrink: 0;
+        }
+        .total-badge-custom.destacado {
+            background: #777777;
+            font-size: 11px;
+        }
+        .total-input-custom {
+            width: 85px;
+            height: 100%;
+            background-color: #e6e8eb !important;
+            border: 1px solid #c4c7cc !important;
+            border-left: none !important;
+            border-radius: 0 2px 2px 0;
+            font-size: 11px;
+            font-weight: 800;
+            text-align: right;
+            padding: 0 6px;
+            box-sizing: border-box;
+            color: #333333;
+        }
+        .total-input-custom.destacado {
+            font-size: 12.5px;
+            color: #333333;
+        }
+        .toggle-iva-wrapper {
+            margin-bottom: 2px;
+            width: 100%;
+            text-align: right;
+        }
+        .toggle-iva-wrapper label {
+            font-size: 9.5px;
+            font-weight: 700;
+            color: #333;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #e6e8eb;
+            padding: 2px 6px;
+            border-radius: 3px;
+            border: 1px solid #c4c7cc;
+        }
+        .toggle-iva-wrapper input[type="checkbox"] {
+            width: 13px;
+            height: 13px;
+            margin: 0;
+            cursor: pointer;
+        }
+
+        /* --- ACTION BAR CON ICONO GRANDE DE WHATSAPP --- */
+        .action-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 14px;
+            padding-top: 6px;
+        }
+        .btn-action-group {
+            display: flex;
+            gap: 8px;
+            flex: 1;
+        }
+        .btn-action-group button {
+            flex: 1;
+            padding: 12px 10px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-size: 13px;
+            transition: all 0.2s ease;
+        }
+        .btn-save { background: #666666; color: white; }
+        .btn-save:hover { background: #4f4f4f; }
+        .btn-print { background: #888888; color: white; }
+        .btn-print:hover { background: #737373; }
+        
+        /* Botón de WhatsApp: Estado inicial en GRIS y deshabilitado hasta guardar */
+        .btn-whatsapp-grande {
+            background: #8e8e93;
+            color: #ffffff;
+            width: 54px;
+            height: 54px;
+            min-width: 54px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: not-allowed;
+            opacity: 0.65;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+            transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
+            padding: 0;
+            flex-shrink: 0;
+        }
+        .btn-whatsapp-grande.no-guardado,
+        .btn-whatsapp-grande:disabled {
+            background: #8e8e93 !important;
+            cursor: not-allowed !important;
+            opacity: 0.65 !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25) !important;
+        }
+
+        /* Estado guardado con éxito en Supabase: VERDE de WhatsApp */
+        .btn-whatsapp-grande.guardado {
+            background: #25D366 !important;
+            color: #ffffff !important;
+            cursor: pointer !important;
+            opacity: 1 !important;
+            box-shadow: 0 4px 15px rgba(37, 211, 102, 0.5), 0 2px 6px rgba(0,0,0,0.15) !important;
+        }
+        .btn-whatsapp-grande.guardado:hover {
+            background: #20ba59 !important;
+            transform: scale(1.08);
+            box-shadow: 0 6px 20px rgba(37, 211, 102, 0.7) !important;
+        }
+        .btn-whatsapp-grande.guardado:active {
+            transform: scale(0.94);
+        }
+
+        /* Animación pulso/bote: aumenta un par de veces rápido su tamaño un 10% */
+        @keyframes waPulseBounce {
+            0% { transform: scale(1); }
+            20% { transform: scale(1.15); }
+            40% { transform: scale(0.98); }
+            60% { transform: scale(1.15); }
+            80% { transform: scale(0.99); }
+            100% { transform: scale(1); }
+        }
+        .btn-whatsapp-grande.animar-pulso {
+            animation: waPulseBounce 0.75s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+        .wa-svg-icon {
+            width: 32px;
+            height: 32px;
+            display: block;
+        }
+
+        /* Toast de notificación elegante */
+        .toast-notificacion {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: rgba(22, 22, 22, 0.95);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-left: 4px solid #25D366;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.7);
+            z-index: 999999;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            max-width: 90vw;
+            text-align: center;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .toast-notificacion.visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* Estilos específicos para Modo Visor de Cliente */
+        body.modo-visor-cliente #vista-acceso,
+        body.modo-visor-cliente #vista-menu,
+        body.modo-visor-cliente #btn-volver-pantalla1,
+        body.modo-visor-cliente #btn-config-pantalla2,
+        body.modo-visor-cliente .nav-paginas-fija,
+        body.modo-visor-cliente .btn-guia-scroll,
+        body.modo-visor-cliente .btn-save,
+        body.modo-visor-cliente .btn-whatsapp-grande,
+        body.modo-visor-cliente #btn-salir-fullscreen,
+        body.modo-visor-cliente .toggle-iva-wrapper {
+            display: none !important;
+        }
+        .banner-visor-cliente {
+            background: #1e1e1e;
+            color: #fff;
+            border: 1px solid #444;
+            border-left: 4px solid #e3000f;
+            border-radius: 8px;
+            padding: 12px 18px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        }
+        .banner-visor-btn-print {
+            background: #e3000f;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 18px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s ease, transform 0.15s ease;
+        }
+        .banner-visor-btn-print:hover {
+            background: #bd000c;
+            transform: scale(1.03);
+        }
+
+        .btn-menu {
+            width: 100%; padding: 14px; margin: 10px 0; border: none; 
+            border-radius: 6px; font-size: 16px; cursor: pointer; 
+            font-weight: bold; text-transform: uppercase; transition: all 0.2s ease;
+        }
+        .btn-main { background: #666666; color: var(--dm-text-light); }
+        .btn-main:hover { background: #4f4f4f; }
+
+        /* Botón / Tirador deslizante para salir de Fullscreen */
+        #btn-salir-fullscreen {
+            position: fixed;
+            top: 8px;
+            left: 50%;
+            transform: translate(-50%, 0);
+            z-index: 100000;
+            cursor: pointer;
+            user-select: none;
+            touch-action: none;
+            transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.2s ease;
+        }
+        .salir-fs-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(22, 22, 22, 0.9);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid #e3000f;
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.6), 0 0 10px rgba(227,0,15,0.3);
+        }
+        .salir-fs-pill svg {
+            stroke: #e3000f;
+            animation: bounceDownFS 1.5s infinite;
+        }
+        @keyframes bounceDownFS {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(3px); }
+        }
+
+        .hidden { display: none !important; }
+
+        /* --- IMPRESIÓN AJUSTADA A 1 PÁGINA A4 (SIN DESBORDAMIENTOS) --- */
+        @page {
+            size: A4 portrait;
+            margin: 3mm 4mm 3mm 4mm;
+        }
+        @media print {
+            html, body { 
+                background: #ffffff !important; 
+                padding: 0 !important; 
+                margin: 0 !important; 
+                width: 100% !important; 
+                height: 100% !important; 
+                overflow: hidden !important; 
+            }
+            .nav-paginas-fija, #widget-tiempo, #vista-acceso, #vista-menu, #btn-volver-pantalla1, #btn-config-pantalla2, #btn-salir-fullscreen, #vista-privacidad, #modal-alerta-email, .btn-guia-scroll, .action-bar, .toggle-iva-wrapper { display: none !important; }
+            .scroll-paginas-container { height: auto !important; overflow: visible !important; display: block !important; }
+            .pagina-item { 
+                display: block !important; 
+                height: auto !important; 
+                overflow: visible !important; 
+                padding: 0 !important; 
+                background: transparent !important; 
+                page-break-inside: avoid !important; 
+                break-inside: avoid !important; 
+                page-break-after: avoid !important; 
+                break-after: avoid !important; 
+            }
+            .card { 
+                box-shadow: none !important; 
+                border: none !important; 
+                max-width: 100% !important; 
+                margin: 0 !important; 
+                padding: 0 !important; 
+                page-break-inside: avoid !important; 
+                break-inside: avoid !important; 
+                page-break-after: avoid !important; 
+                break-after: avoid !important; 
+            }
+            .cabecera-wrapper { padding: 2px 4px !important; border-bottom: 1px solid #ccc !important; }
+            .doc-banner-header { 
+                max-height: 245px !important; 
+                width: 100% !important; 
+                height: auto !important; 
+                object-fit: contain !important;
+                display: block !important;
+            }
+            .pie-wrapper { padding: 2px 0 0 0 !important; margin-top: 2px !important; border-top: 1px solid #ccc !important; }
+            .doc-banner-footer { 
+                max-height: 130px !important; 
+                width: 100% !important; 
+                height: auto !important; 
+                object-fit: contain !important;
+                display: block !important;
+            }
+            .form-content { padding: 4px 8px !important; }
+            .doc-header-banner { margin: 4px 0 5px 0 !important; }
+            .doc-title-badge { height: 46px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .doc-title-badge span { font-size: 20px !important; padding: 0 16px 0 12px !important; }
+            .red-slash-right { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .meta-row label { 
+                font-size: 10px !important; 
+                display: inline-flex !important;
+                align-items: center !important;
+                gap: 3.5px !important;
+            }
+            .meta-row label::before {
+                content: '' !important;
+                display: inline-block !important;
+                width: 3px !important;
+                height: 9px !important;
+                background: #e3000f !important;
+                border-radius: 1px !important;
+                flex-shrink: 0 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .doc-meta-input { height: 29px !important; font-size: 11px !important; width: 85px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .section-banner { height: 29px !important; margin: 5px 0 4px 0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .red-slash-left { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .section-banner span { font-size: 11.5px !important; }
+            .input-group { margin-bottom: 4px !important; gap: 6px !important; }
+            .input-field label { 
+                font-size: 9.5px !important; 
+                margin-bottom: 2px !important; 
+                line-height: 1 !important; 
+                color: #444 !important; 
+                display: inline-flex !important;
+                align-items: center !important;
+                gap: 4px !important;
+            }
+            .input-field label::before {
+                content: '' !important;
+                display: inline-block !important;
+                width: 3.5px !important;
+                height: 10px !important;
+                background: #e3000f !important;
+                border-radius: 1px !important;
+                flex-shrink: 0 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .doc-input-box { padding: 2px 6px !important; font-size: 11px !important; height: 32px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .vehiculo-inline { gap: 6px !important; margin-bottom: 4px !important; }
+            .desglose-header-custom { height: 31px !important; font-size: 11px !important; margin-top: 5px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .desglose-row-custom { margin-top: 2px !important; gap: 2px !important; }
+            .desglose-row-custom input { height: 32px !important; font-size: 11px !important; padding: 2px 5px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .obs-totales-wrapper-custom { margin-top: 6px !important; gap: 10px !important; }
+            .obs-label-custom {
+                display: inline-flex !important; 
+                align-items: center !important; 
+                gap: 4px !important;
+            }
+            .obs-label-custom::before {
+                content: '' !important;
+                display: inline-block !important;
+                width: 3.5px !important;
+                height: 10px !important;
+                background: #e3000f !important;
+                border-radius: 1px !important;
+                flex-shrink: 0 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .obs-textarea-custom { height: 100% !important; min-height: 90px !important; font-size: 11px !important; padding: 4px 6px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .totales-box-custom { width: 190px !important; gap: 2px !important; }
+            .total-row-custom { height: 36px !important; }
+            .total-badge-custom { font-size: 11px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .red-slash-mini { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .total-badge-custom.destacado { font-size: 12px !important; }
+            .total-input-custom { font-size: 11px !important; width: 85px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .total-input-custom.destacado { font-size: 13px !important; }
+
+            body.imprimiendo-presupuesto #pagina-facturas,
+            body.imprimiendo-presupuesto #pagina-configuracion { display: none !important; }
+            
+            body.imprimiendo-factura #pagina-presupuestos,
+            body.imprimiendo-factura #pagina-configuracion { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+    <!-- TOAST DE NOTIFICACIONES -->
+    <div id="toast-notificacion" class="toast-notificacion"></div>
+
+    <!-- TIRADOR / BOTÓN PARA SALIR DE FULLSCREEN (ARRASTRAR HACIA ABAJO O PULSAR) -->
+    <div id="btn-salir-fullscreen" class="hidden" title="Arrastra hacia abajo para salir de pantalla completa">
+        <div class="salir-fs-pill">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 9l-7 7-7-7"/>
+            </svg>
+            <span>Arrastra para salir</span>
+        </div>
+    </div>
+
+    <!-- BOTÓN CONFIGURACIÓN EN EL HEADER (A LA IZQUIERDA DE LA HORA, A 10PX DEL BORDE EXTERIOR) -->
+    <button id="btn-config-pantalla2" class="hidden" onclick="abrirFormulario('Configuracion')" title="Configuración">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+    </button>
+
+    <!-- BOTÓN VOLVER EN EL HEADER (A LA DERECHA DE LA HORA, A 10PX DEL BORDE EXTERIOR) -->
+    <button id="btn-volver-pantalla1" class="hidden" onclick="volverAcceso()" title="Volver al acceso">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+    </button>
+
+    <!-- WIDGET SUPERIOR (RELOJ, FECHA, TEMPERATURA) -->
+    <div id="widget-tiempo" style="position: absolute; top: 25px; width: 100%; max-width: 900px; padding: 0 30px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; text-shadow: 0 2px 6px rgba(0,0,0,0.9); z-index: 10; pointer-events: none;">
+        <div id="bloque-reloj" style="display: flex; align-items: flex-start; justify-content: center; height: 50px;">
+            <span id="ampm" style="font-size: 14px; font-weight: bold; color: #fffbc2; font-family: 'Segoe UI', sans-serif; margin-right: 10px; margin-top: -5px;">AM</span>
+            <div id="svg-clock-container" style="display: flex; gap: 4px; align-items: center; height: 100%;"></div>
+        </div>
+        <div id="bloque-clima" style="display: flex; justify-content: space-between; align-items: flex-end; width: 100%; margin-top: 195px;">
+            <div id="fecha-widget" style="display: flex; flex-direction: column; align-items: center; text-align: center; color: #ddd; text-transform: uppercase; padding-bottom: 2px;">-</div>
+            <div style="display: flex; flex-direction: column; align-items: center; width: 128px;">
+                <div style="display: flex; justify-content: space-between; font-size: 15px; color: #999; font-weight: bold; width: 100%; line-height: 1; margin-bottom: 6px;">
+                    <span>M</span><span>Á</span><span>L</span><span>A</span><span>G</span><span>A</span>
+                </div>
+                <div id="temp-widget" style="font-size: 34px; font-weight: bold; transition: color 0.3s ease; text-align: center; line-height: 0.85;">- °C</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PANTALLA 1: ACCESO MEDIANTE EMAIL -->
+    <div id="vista-acceso" class="menu-container" style="position: relative; z-index: 25;">
+        <input type="email" id="user-email" class="glass-input" placeholder="Añade tu email para acceder" onkeydown="if(event.key==='Enter') accederHerramienta()">
+        
+        <button class="glass-btn" onclick="accederHerramienta()">Acceder</button>
+        
+        <div id="brand-gestarian" style="position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 300px; display: flex; flex-direction: column; align-items: center; user-select: none; pointer-events: none;">
+            <div style="width: 100%; display: flex; justify-content: space-between; color: #fffbc2; text-shadow: 0 0 8px rgba(255, 251, 194, 0.6); font-size: 13px; font-weight: 200; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;">
+                <span>G</span><span>E</span><span>S</span><span>T</span><span>A</span><span>R</span><span>I</span><span>A</span><span>N</span>
+            </div>
+            <div style="align-self: flex-end; font-size: 10px; font-weight: 700; color: #a3a3a3; font-family: 'Segoe UI', sans-serif; letter-spacing: 0.5px; margin-top: 1px; margin-right: 2px;">
+                Lite
+            </div>
+        </div>
+        
+        <div id="contenedor-privacidad" style="position: fixed; bottom: 8px; width: 100%; text-align: center; left: 0; z-index: 20;">
+            <button onclick="abrirPrivacidad()" style="background: rgba(0,0,0,0.6); border: none; color: #ccc; text-decoration: underline; cursor: pointer; font-size: 12px; padding: 5px 10px; border-radius: 4px; font-family: inherit;">Política de Privacidad y Tratamiento de Datos</button>
+        </div>
+    </div>
+
+    <!-- PANTALLA 2: MENÚ DE BOTONES -->
+    <div id="vista-menu" class="menu-container hidden">
+        <button class="btn-menu-big" onclick="abrirFormulario('Presupuesto')">Presupuestos</button>
+        <button class="btn-menu-big" onclick="abrirFormulario('Factura')">Facturas</button>
+        <div style="width: 90%; max-width: 300px; display: flex; flex-direction: column; align-items: center; user-select: none; pointer-events: none; margin-top: -6px;">
+            <div style="width: 100%; display: flex; justify-content: space-between; color: #fffbc2; text-shadow: 0 0 8px rgba(255, 251, 194, 0.6); font-size: 13px; font-weight: 200; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;">
+                <span>G</span><span>E</span><span>S</span><span>T</span><span>A</span><span>R</span><span>I</span><span>A</span><span>N</span>
+            </div>
+            <div style="align-self: flex-end; font-size: 10px; font-weight: 700; color: #a3a3a3; font-family: 'Segoe UI', sans-serif; letter-spacing: 0.5px; margin-top: 1px; margin-right: 2px;">
+                Lite
+            </div>
+        </div>
+    </div>
+
+    <!-- POLÍTICA DE PRIVACIDAD -->
+    <div id="vista-privacidad" class="card hidden" style="padding: 30px; text-align: left; overflow-y: auto; max-height: 85vh; margin-top: 40px;">
+        <h2 style="color: var(--dm-red); border-bottom: 2px solid var(--dm-red); padding-bottom: 10px; text-transform: uppercase;">Política de Privacidad</h2>
+        <p>De conformidad con la normativa vigente en materia de protección de datos, le informamos que el correo electrónico proporcionado será tratado por <strong>DM CAR</strong>.</p>
+        <p><strong>Finalidad del Tratamiento:</strong> Los datos recogidos serán utilizados única y exclusivamente con fines comerciales, para enviarle información relevante sobre nuestros servicios, promociones y seguimiento de presupuestos/facturas.</p>
+        <p><strong>Cesión a terceros:</strong> Garantizamos que sus datos personales <strong>NO serán vendidos, cedidos ni ofrecidos a terceros</strong> bajo ninguna circunstancia, manteniéndose para uso estrictamente interno.</p>
+        <p>Al introducir su correo electrónico y utilizar <strong>Gestarian Lite</strong> (versión gratuita), usted acepta de forma expresa el tratamiento de sus datos bajo estas condiciones.</p>
+        <button class="btn-menu btn-main" style="margin-top: 25px;" onclick="cerrarPrivacidad()">He leído y acepto</button>
+    </div>
+
+    <!-- MODAL ALERTA EMAIL VACÍO -->
+    <div id="modal-alerta-email" class="hidden" onclick="cerrarAlertaEmail()" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); color: #ffffff; z-index: 99999; display: flex; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; text-align: center; cursor: pointer;">
+        <div style="background: #000000; border: 1px solid rgba(255,255,255,0.3); border-radius: 20px; padding: 40px 30px; max-width: 580px; width: 90%; text-align: center; box-shadow: 0 0 40px rgba(0,0,0,0.9), 0 0 20px rgba(227,0,15,0.4); box-sizing: border-box; cursor: default;" onclick="event.stopPropagation()">
+            <p style="font-size: 24px; font-weight: 500; line-height: 1.5; color: #ffffff; margin: 0 0 25px 0; font-family: inherit;">Quillóoo... con la caraja.  Mete el correo antes de darle al botoncito. ojú...!!</p>
+            <button onclick="cerrarAlertaEmail()" style="background: rgba(255,255,255,0.12); color: #ffffff; border: 1px solid #ffffff; padding: 10px 28px; font-size: 16px; border-radius: 10px; cursor: pointer; text-transform: uppercase; font-family: inherit; transition: all 0.2s ease;">Cerrar</button>
+        </div>
+    </div>
+
+    <!-- CONTENEDOR DE LA APLICACIÓN CON NAVEGACIÓN SCROLL ENTRE PÁGINAS -->
+    <div id="contenedor-app-paginas" class="hidden">
+        <!-- BARRA FIJA SUPERIOR DE TABS -->
+        <div class="nav-paginas-fija">
+            <div class="nav-tabs-wrapper">
+                <button class="nav-tab active" onclick="irAPagina(0)" id="tab-btn-0">
+                    <span>📄</span> Presupuestos
+                </button>
+                <button class="nav-tab" onclick="irAPagina(1)" id="tab-btn-1">
+                    <span>🧾</span> Facturas
+                </button>
+                <button class="nav-tab" onclick="irAPagina(2)" id="tab-btn-2">
+                    <span>⚙️</span> Configuración
+                </button>
+            </div>
+            <!-- Botón volver al menú a 10px del borde derecho -->
+            <button id="btn-volver-nav" onclick="volverAlMenu()" title="Volver al menú" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); width: 34px; height: 34px; min-width: 34px; border-radius: 50%; background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.45); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 0 10px var(--dm-red); transition: all 0.2s ease; padding: 0;">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- CONTENEDOR SCROLL HORIZONTAL (DESLIZAR / SWIPE) -->
+        <div class="scroll-paginas-container" id="scroll-paginas-container">
+            
+            <!-- ============================================== -->
+            <!-- PÁGINA 1: PRESUPUESTOS                         -->
+            <!-- ============================================== -->
+            <section class="pagina-item" id="pagina-presupuestos">
+                <div class="card">
+                    <!-- Cabecera Corporativa DM CAR -->
+                    <div class="cabecera-wrapper">
+                        <img src="/public/images/cabecera_dmcar.png" alt="DM CAR Chapa y Pintura" class="doc-banner-header">
+                    </div>
+
+                    <!-- Banner de Título PRESUPUESTO -->
+                    <div class="doc-header-banner">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div class="doc-title-badge">
+                                <span>PRESUPUESTO</span>
+                                <div class="red-slash-right"></div>
+                            </div>
+                            <span class="doc-slogan-red">CHAPA Y PINTURA &bull; TU VEHÍCULO EN BUENAS MANOS</span>
+                        </div>
+                        <div class="doc-meta-fields">
+                            <div class="meta-row">
+                                <label>Nº</label>
+                                <input type="text" id="doc-num-pres" class="doc-meta-input" placeholder="0001">
+                            </div>
+                            <div class="meta-row">
+                                <label>FECHA</label>
+                                <input type="text" id="doc-fecha-pres" class="doc-meta-input" placeholder="DD/MM/AAAA">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-content">
+                        <!-- DATOS DEL CLIENTE (3 Filas exactas como en la plantilla) -->
+                        <div class="section-banner">
+                            <div class="red-slash-left"></div>
+                            <span>DATOS DEL CLIENTE</span>
+                        </div>
+                        <div class="input-group">
+                            <div class="input-field" style="flex: 3;"><label>NOMBRE / RAZÓN SOCIAL</label><input type="text" id="doc-cliente-pres" class="doc-input-box" placeholder="Nombre completo"></div>
+                            <div class="input-field" style="flex: 1;"><label>DNI / CIF</label><input type="text" id="doc-dni-pres" class="doc-input-box" placeholder="DNI / CIF"></div>
+                        </div>
+                        <div class="input-group">
+                            <div class="input-field" style="flex: 1;"><label>DIRECCIÓN</label><input type="text" id="doc-direccion-pres" class="doc-input-box" placeholder="Dirección completa"></div>
+                        </div>
+                        <div class="input-group">
+                            <div class="input-field" style="flex: 2.2;"><label>POBLACIÓN</label><input type="text" id="doc-poblacion-pres" class="doc-input-box" placeholder="Población"></div>
+                            <div class="input-field" style="flex: 1;"><label>C.P.</label><input type="text" id="doc-cp-pres" class="doc-input-box" placeholder="C.P."></div>
+                            <div class="input-field" style="flex: 1.8;"><label>TELÉFONO</label><input type="tel" id="doc-telefono-pres" class="doc-input-box" placeholder="Teléfono"></div>
+                        </div>
+
+                        <!-- DATOS DEL VEHÍCULO (1 Fila: Marca, Modelo, Matrícula, Kilómetros) -->
+                        <div class="section-banner">
+                            <div class="red-slash-left"></div>
+                            <span>DATOS DEL VEHÍCULO</span>
+                        </div>
+                        <div class="input-group vehiculo-inline">
+                            <div class="input-field"><label>MARCA</label><input type="text" id="doc-marca-pres" class="doc-input-box" placeholder="Marca"></div>
+                            <div class="input-field"><label>MODELO</label><input type="text" id="doc-modelo-pres" class="doc-input-box" placeholder="Modelo"></div>
+                            <div class="input-field"><label>MATRÍCULA</label><input type="text" id="doc-matricula-pres" class="doc-input-box" placeholder="Matrícula"></div>
+                            <div class="input-field"><label>KILÓMETROS</label><input type="text" id="doc-km-pres" class="doc-input-box" placeholder="Km"></div>
+                        </div>
+
+                        <!-- TABLA DE DESGLOSE DE TRABAJOS (5 FILAS) -->
+                        <div class="tabla-desglose">
+                            <div class="desglose-header-custom">
+                                <div class="col-c-cant">CANT.</div>
+                                <div class="col-c-desc">DESCRIPCIÓN DE LOS TRABAJOS</div>
+                                <div class="col-c-precio">PRECIO UNITARIO</div>
+                                <div class="col-c-total">TOTAL</div>
+                            </div>
+                            <div class="desglose-row-custom desglose-row">
+                                <input type="number" class="col-c-cant fila-cant" value="1" oninput="calcularFilas('Presupuesto')">
+                                <input type="text" class="col-c-desc fila-desc" id="doc-concepto-pres" placeholder="Descripción principal">
+                                <input type="number" class="col-c-precio fila-precio" oninput="calcularFilas('Presupuesto')">
+                                <input type="number" class="col-c-total fila-total" readonly>
+                            </div>
+                            <div class="desglose-row-custom desglose-row">
+                                <input type="number" class="col-c-cant fila-cant" oninput="calcularFilas('Presupuesto')">
+                                <input type="text" class="col-c-desc fila-desc">
+                                <input type="number" class="col-c-precio fila-precio" oninput="calcularFilas('Presupuesto')">
+                                <input type="number" class="col-c-total fila-total" readonly>
+                            </div>
+                            <div class="desglose-row-custom desglose-row">
+                                <input type="number" class="col-c-cant fila-cant" oninput="calcularFilas('Presupuesto')">
+                                <input type="text" class="col-c-desc fila-desc">
+                                <input type="number" class="col-c-precio fila-precio" oninput="calcularFilas('Presupuesto')">
+                                <input type="number" class="col-c-total fila-total" readonly>
+                            </div>
+                            <div class="desglose-row-custom desglose-row">
+                                <input type="number" class="col-c-cant fila-cant" oninput="calcularFilas('Presupuesto')">
+                                <input type="text" class="col-c-desc fila-desc">
+                                <input type="number" class="col-c-precio fila-precio" oninput="calcularFilas('Presupuesto')">
+                                <input type="number" class="col-c-total fila-total" readonly>
+                            </div>
+                            <div class="desglose-row-custom desglose-row">
+                                <input type="number" class="col-c-cant fila-cant" oninput="calcularFilas('Presupuesto')">
+                                <input type="text" class="col-c-desc fila-desc">
+                                <input type="number" class="col-c-precio fila-precio" oninput="calcularFilas('Presupuesto')">
+                                <input type="number" class="col-c-total fila-total" readonly>
+                            </div>
+                        </div>
+
+                        <!-- OBSERVACIONES A LA IZQUIERDA Y TOTALES CON IVA A LA DERECHA -->
+                        <div class="obs-totales-wrapper-custom">
+                            <div class="obs-box-custom">
+                                <div class="obs-label-custom">OBSERVACIONES</div>
+                                <textarea id="doc-obs-pres" class="obs-textarea-custom" placeholder="Observaciones adicionales del presupuesto..."></textarea>
+                            </div>
+                            <div class="totales-box-custom">
+                                <!-- Casilla de activar IVA en presupuesto (por defecto desactivada) -->
+                                <div class="toggle-iva-wrapper">
+                                    <label>
+                                        <input type="checkbox" id="toggle-iva-pres" onchange="calcularTotales('Presupuesto')">
+                                        Aplicar IVA (21%)
+                                    </label>
+                                </div>
+                                <div class="total-row-custom">
+                                    <div class="total-badge-custom">
+                                        <div class="red-slash-mini"></div>
+                                        <span>B. I.</span>
+                                    </div>
+                                    <input type="text" id="doc-base-pres" class="total-input-custom" value="0.00" readonly>
+                                </div>
+                                <div class="total-row-custom" id="linea-iva-pres" style="display: none;">
+                                    <div class="total-badge-custom">
+                                        <div class="red-slash-mini"></div>
+                                        <span>IVA 21%</span>
+                                    </div>
+                                    <input type="text" id="doc-iva-pres" class="total-input-custom" value="0.00" readonly>
+                                </div>
+                                <div class="total-row-custom">
+                                    <div class="total-badge-custom destacado">
+                                        <div class="red-slash-mini"></div>
+                                        <span>TOTAL</span>
+                                    </div>
+                                    <input type="text" id="doc-total-pres" class="total-input-custom destacado" value="0.00" readonly>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pié Corporativo DM CAR -->
+                        <div class="pie-wrapper">
+                            <img src="/public/images/pie_dmcar.png" alt="DM CAR - Tu vehículo en buenas manos" class="doc-banner-footer">
+                            <div class="doc-pie-text-red">Tu vehículo, en buenas manos &bull; Gracias por tu confianza</div>
+                        </div>
+
+                        <!-- Barra de Acciones: Guardar, Imprimir y Gran Botón WhatsApp -->
+                        <div class="action-bar">
+                            <div class="btn-action-group">
+                                <button class="btn-save" onclick="guardarDocumento('Presupuesto')">Guardar</button>
+                                <button class="btn-print" onclick="imprimirDocumento('Presupuesto')">Imprimir</button>
+                            </div>
+                            <button class="btn-whatsapp-grande no-guardado" id="btn-wa-pres" onclick="enviarWhatsApp('Presupuesto')" title="Guarda primero el documento para enviar por WhatsApp" aria-label="Enviar por WhatsApp" disabled>
+                                <svg viewBox="0 0 24 24" class="wa-svg-icon" fill="currentColor">
+                                    <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0012.04 2zm0 18.06c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.12 8.12 0 01-1.24-4.29c0-4.51 3.67-8.18 8.18-8.18 2.19 0 4.24.85 5.79 2.4 1.55 1.55 2.4 3.6 2.4 5.78 0 4.52-3.67 8.15-8.14 8.15zm4.48-6.12c-.25-.12-1.47-.72-1.7-.81-.23-.08-.39-.12-.56.12-.17.25-.64.81-.79.97-.14.17-.29.19-.54.07-.25-.12-1.05-.39-2-1.23-.74-.66-1.24-1.47-1.39-1.72-.14-.25-.02-.38.11-.5.11-.11.25-.29.37-.43.12-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.4-.42-.56-.43h-.47c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1s.9 2.43 1.03 2.6c.12.17 1.77 2.7 4.29 3.79.6.26 1.07.41 1.43.53.6.19 1.15.16 1.58.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.14-1.18-.06-.12-.22-.19-.47-.31z"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <!-- Indicador visual de desplazamiento hacia Facturas -->
+                        <div class="btn-guia-scroll" style="text-align: center; margin-top: 20px;">
+                            <button onclick="irAPagina(1)" style="background: transparent; border: 1px dashed #aaa; color: #666; padding: 6px 16px; border-radius: 20px; font-size: 12px; cursor: pointer;">
+                                Desliza o pulsa aquí para ir a <strong>Facturas ➔</strong>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================== -->
+            <!-- PÁGINA 2: FACTURAS                             -->
+            <!-- ============================================== -->
+            <section class="pagina-item" id="pagina-facturas">
+                <div class="card">
+                    <!-- Cabecera Corporativa DM CAR -->
+                    <div class="cabecera-wrapper">
+                        <img src="/public/images/cabecera_dmcar.png" alt="DM CAR Chapa y Pintura" class="doc-banner-header">
+                    </div>
+
+                    <!-- Banner de Título FACTURA -->
+                    <div class="doc-header-banner">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div class="doc-title-badge">
+                                <span>FACTURA</span>
+                                <div class="red-slash-right"></div>
+                            </div>
+                            <span class="doc-slogan-red">CHAPA Y PINTURA &bull; TU VEHÍCULO EN BUENAS MANOS</span>
+                        </div>
+                        <div class="doc-meta-fields">
+                            <div class="meta-row">
+                                <label>Nº</label>
+                                <input type="text" id="doc-num-fac" class="doc-meta-input" placeholder="0001">
+                            </div>
+                            <div class="meta-row">
+                                <label>FECHA</label>
+                                <input type="text" id="doc-fecha-fac" class="doc-meta-input" placeholder="DD/MM/AAAA">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-content">
+                        <!-- DATOS DEL CLIENTE (3 Filas exactas como en la plantilla) -->
+                        <div class="section-banner">
+                            <div class="red-slash-left"></div>
+                            <span>DATOS DEL CLIENTE</span>
+                        </div>
+                        <div class="input-group">
+                            <div class="input-field" style="flex: 3;"><label>NOMBRE / RAZÓN SOCIAL</label><input type="text" id="doc-cliente-fac" class="doc-input-box" placeholder="Nombre completo"></div>
+                            <div class="input-field" style="flex: 1;"><label>DNI / CIF</label><input type="text" id="doc-dni-fac" class="doc-input-box" placeholder="DNI / CIF"></div>
+                        </div>
+                        <div class="input-group">
+                            <div class="input-field" style="flex: 1;"><label>DIRECCIÓN</label><input type="text" id="doc-direccion-fac" class="doc-input-box" placeholder="Dirección completa"></div>
+                        </div>
+                        <div class="input-group">
+                            <div class="input-field" style="flex: 2.2;"><label>POBLACIÓN</label><input type="text" id="doc-poblacion-fac" class="doc-input-box" placeholder="Población"></div>
+                            <div class="input-field" style="flex: 1;"><label>C.P.</label><input type="text" id="doc-cp-fac" class="doc-input-box" placeholder="C.P."></div>
+                            <div class="input-field" style="flex: 1.8;"><label>TELÉFONO</label><input type="tel" id="doc-telefono-fac" class="doc-input-box" placeholder="Teléfono"></div>
+                        </div>
+
+                        <!-- DATOS DEL VEHÍCULO (1 Fila: Marca, Modelo, Matrícula, Kilómetros) -->
+                        <div class="section-banner">
+                            <div class="red-slash-left"></div>
+                            <span>DATOS DEL VEHÍCULO</span>
+                        </div>
+                        <div class="input-group vehiculo-inline">
+                            <div class="input-field"><label>MARCA</label><input type="text" id="doc-marca-fac" class="doc-input-box" placeholder="Marca"></div>
+                            <div class="input-field"><label>MODELO</label><input type="text" id="doc-modelo-fac" class="doc-input-box" placeholder="Modelo"></div>
+                            <div class="input-field"><label>MATRÍCULA</label><input type="text" id="doc-matricula-fac" class="doc-input-box" placeholder="Matrícula"></div>
+                            <div class="input-field"><label>KILÓMETROS</label><input type="text" id="doc-km-fac" class="doc-input-box" placeholder="Km"></div>
+                        </div>
+
+                        <!-- TABLA DE DESGLOSE DE TRABAJOS (5 FILAS) -->
+                        <div class="tabla-desglose">
+                            <div class="desglose-header-custom">
+                                <div class="col-c-cant">CANT.</div>
+                                <div class="col-c-desc">DESCRIPCIÓN</div>
+                                <div class="col-c-precio">PRECIO UNITARIO</div>
+                                <div class="col-c-total">TOTAL</div>
+                            </div>
+                            <div class="desglose-row-custom desglose-row">
+                                <input type="number" class="col-c-cant fila-cant" value="1" oninput="calcularFilas('Factura')">
+                                <input type="text" class="col-c-desc fila-desc" id="doc-concepto-fac" placeholder="Descripción principal">
+                                <input type="number" class="col-c-precio fila-precio" oninput="calcularFilas('Factura')">
+                                <input type="number" class="col-c-total fila-total" readonly>
+                            </div>
+                            <div class="desglose-row-custom desglose-row">
+                                <input type="number" class="col-c-cant fila-cant" oninput="calcularFilas('Factura')">
+                                <input type="text" class="col-c-desc fila-desc">
+                                <input type="number" class="col-c-precio fila-precio" oninput="calcularFilas('Factura')">
+                                <input type="number" class="col-c-total fila-total" readonly>
+                            </div>
+                            <div class="desglose-row-custom desglose-row">
+                                <input type="number" class="col-c-cant fila-cant" oninput="calcularFilas('Factura')">
+                                <input type="text" class="col-c-desc fila-desc">
+                                <input type="number" class="col-c-precio fila-precio" oninput="calcularFilas('Factura')">
+                                <input type="number" class="col-c-total fila-total" readonly>
+                            </div>
+                            <div class="desglose-row-custom desglose-row">
+                                <input type="number" class="col-c-cant fila-cant" oninput="calcularFilas('Factura')">
+                                <input type="text" class="col-c-desc fila-desc">
+                                <input type="number" class="col-c-precio fila-precio" oninput="calcularFilas('Factura')">
+                                <input type="number" class="col-c-total fila-total" readonly>
+                            </div>
+                            <div class="desglose-row-custom desglose-row">
+                                <input type="number" class="col-c-cant fila-cant" oninput="calcularFilas('Factura')">
+                                <input type="text" class="col-c-desc fila-desc">
+                                <input type="number" class="col-c-precio fila-precio" oninput="calcularFilas('Factura')">
+                                <input type="number" class="col-c-total fila-total" readonly>
+                            </div>
+                        </div>
+
+                        <!-- OBSERVACIONES A LA IZQUIERDA Y TOTALES CON IVA A LA DERECHA (FACTURA: IVA SIEMPRE INCLUIDO) -->
+                        <div class="obs-totales-wrapper-custom">
+                            <div class="obs-box-custom">
+                                <div class="obs-label-custom">OBSERVACIONES</div>
+                                <textarea id="doc-obs-fac" class="obs-textarea-custom" placeholder="Observaciones adicionales de la factura..."></textarea>
+                            </div>
+                            <div class="totales-box-custom">
+                                <div class="total-row-custom">
+                                    <div class="total-badge-custom">
+                                        <div class="red-slash-mini"></div>
+                                        <span>B. I.</span>
+                                    </div>
+                                    <input type="text" id="doc-base-fac" class="total-input-custom" value="0.00" readonly>
+                                </div>
+                                <div class="total-row-custom" id="linea-iva-fac">
+                                    <div class="total-badge-custom">
+                                        <div class="red-slash-mini"></div>
+                                        <span>IVA 21%</span>
+                                    </div>
+                                    <input type="text" id="doc-iva-fac" class="total-input-custom" value="0.00" readonly>
+                                </div>
+                                <div class="total-row-custom">
+                                    <div class="total-badge-custom destacado">
+                                        <div class="red-slash-mini"></div>
+                                        <span>TOTAL</span>
+                                    </div>
+                                    <input type="text" id="doc-total-fac" class="total-input-custom destacado" value="0.00" readonly>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pié Corporativo DM CAR -->
+                        <div class="pie-wrapper">
+                            <img src="/public/images/pie_dmcar.png" alt="DM CAR - Tu vehículo en buenas manos" class="doc-banner-footer">
+                            <div class="doc-pie-text-red">Tu vehículo, en buenas manos &bull; Gracias por tu confianza</div>
+                        </div>
+
+                        <!-- Barra de Acciones: Guardar, Imprimir y Gran Botón WhatsApp -->
+                        <div class="action-bar">
+                            <div class="btn-action-group">
+                                <button class="btn-save" onclick="guardarDocumento('Factura')">Guardar</button>
+                                <button class="btn-print" onclick="imprimirDocumento('Factura')">Imprimir</button>
+                            </div>
+                            <button class="btn-whatsapp-grande no-guardado" id="btn-wa-fac" onclick="enviarWhatsApp('Factura')" title="Guarda primero el documento para enviar por WhatsApp" aria-label="Enviar por WhatsApp" disabled>
+                                <svg viewBox="0 0 24 24" class="wa-svg-icon" fill="currentColor">
+                                    <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0012.04 2zm0 18.06c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.12 8.12 0 01-1.24-4.29c0-4.51 3.67-8.18 8.18-8.18 2.19 0 4.24.85 5.79 2.4 1.55 1.55 2.4 3.6 2.4 5.78 0 4.52-3.67 8.15-8.14 8.15zm4.48-6.12c-.25-.12-1.47-.72-1.7-.81-.23-.08-.39-.12-.56.12-.17.25-.64.81-.79.97-.14.17-.29.19-.54.07-.25-.12-1.05-.39-2-1.23-.74-.66-1.24-1.47-1.39-1.72-.14-.25-.02-.38.11-.5.11-.11.25-.29.37-.43.12-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.4-.42-.56-.43h-.47c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1s.9 2.43 1.03 2.6c.12.17 1.77 2.7 4.29 3.79.6.26 1.07.41 1.43.53.6.19 1.15.16 1.58.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.14-1.18-.06-.12-.22-.19-.47-.31z"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <!-- Indicadores de navegación -->
+                        <div class="btn-guia-scroll" style="display: flex; justify-content: space-between; margin-top: 20px;">
+                            <button onclick="irAPagina(0)" style="background: transparent; border: 1px dashed #aaa; color: #666; padding: 6px 14px; border-radius: 20px; font-size: 12px; cursor: pointer;">
+                                ◀ <strong>Presupuestos</strong>
+                            </button>
+                            <button onclick="irAPagina(2)" style="background: transparent; border: 1px dashed #aaa; color: #666; padding: 6px 14px; border-radius: 20px; font-size: 12px; cursor: pointer;">
+                                <strong>Configuración ➔</strong>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================== -->
+            <!-- PÁGINA 3: CONFIGURACIÓN (LA ÚLTIMA PÁGINA)     -->
+            <!-- ============================================== -->
+            <section class="pagina-item" id="pagina-configuracion">
+                <div class="card">
+                    <!-- Cabecera Corporativa DM CAR -->
+                    <div class="cabecera-wrapper">
+                        <img src="/public/images/cabecera_dmcar.png" alt="DM CAR Chapa y Pintura" class="doc-banner-header">
+                    </div>
+
+                    <div class="doc-header">
+                        <h1>Configuración</h1>
+                        <div style="font-size: 12px; font-weight: bold; color: #ffffff;">
+                            TALLER / PROFESIONAL
+                        </div>
+                    </div>
+
+                    <div class="form-content">
+                        <!-- AVISO OBLIGATORIO: APLICACIÓN EXCLUSIVA PARA MÓVIL -->
+                        <div style="background: #fff8f8; border: 1px solid #fecaca; border-left: 5px solid #e3000f; border-radius: 8px; padding: 14px 16px; margin-bottom: 18px; box-shadow: 0 2px 8px rgba(227,0,15,0.06);">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                                <span style="font-size: 22px;">📱</span>
+                                <strong style="color: #e3000f; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Aviso: Aplicación Exclusiva para Móvil</strong>
+                            </div>
+                            <p style="margin: 0; font-size: 13px; color: #444; line-height: 1.45;">
+                                Esta aplicación está desarrollada y optimizada <strong>exclusivamente para teléfonos móviles (smartphones)</strong>. Si accede desde un ordenador, tablet u otro dispositivo, algunas funciones (como el envío directo de WhatsApp, firma o generación de documentos) pueden no estar disponibles o no funcionar correctamente.
+                            </p>
+                        </div>
+
+                        <!-- EXPLICACIÓN: ACCESO AUTOMÁTICO SIN EMAIL -->
+                        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-left: 5px solid #16a34a; border-radius: 8px; padding: 12px 16px; margin-bottom: 18px;">
+                            <p style="margin: 0; font-size: 13px; color: #166534; line-height: 1.45;">
+                                <strong>Acceso Automático Activado:</strong> Al rellenar y guardar todos sus datos en esta página, no será necesario volver a introducir su correo electrónico para entrar a la aplicación en este dispositivo.
+                            </p>
+                        </div>
+
+                        <div class="section-title">Registro de Datos del Taller</div>
+                        <p style="font-size: 12px; color: #666; margin: 4px 0 12px 0;">Todos los campos son estrictamente obligatorios (*):</p>
+
+                        <div class="input-field" style="margin-bottom: 10px;">
+                            <label>Nombre o Razón Social <span style="color: #e3000f;">*</span></label>
+                            <input type="text" id="cfg-nombre" placeholder="Ej: DM CAR Chapa y Pintura">
+                        </div>
+
+                        <div class="input-group">
+                            <div class="input-field" style="flex: 1;">
+                                <label>CIF / NIF <span style="color: #e3000f;">*</span></label>
+                                <input type="text" id="cfg-cif" placeholder="Ej: B12345678">
+                            </div>
+                            <div class="input-field" style="flex: 1;">
+                                <label>Teléfono (útil para WhatsApp) <span style="color: #e3000f;">*</span></label>
+                                <input type="tel" id="cfg-telefono" placeholder="Ej: 600123456">
+                            </div>
+                        </div>
+
+                        <div class="input-field" style="margin-bottom: 10px;">
+                            <label>Domicilio Fiscal <span style="color: #e3000f;">*</span></label>
+                            <input type="text" id="cfg-domicilio" placeholder="Calle, número, CP, población y provincia">
+                        </div>
+
+                        <div class="input-field" style="margin-bottom: 15px;">
+                            <label>Correo Electrónico (Email) <span style="color: #e3000f;">*</span></label>
+                            <input type="email" id="cfg-email" placeholder="correo@ejemplo.com">
+                        </div>
+
+                        <!-- MENSAJES DE ERROR Y ÉXITO -->
+                        <div id="cfg-alerta-error" class="hidden" style="color: #b91c1c; background: #fee2e2; border: 1px solid #f87171; padding: 10px 14px; border-radius: 6px; font-size: 13px; font-weight: bold; margin-bottom: 14px; text-align: center;">
+                            ⚠️ Todos los campos son obligatorios. Por favor, rellena todos los datos.
+                        </div>
+                        <div id="cfg-alerta-exito" class="hidden" style="color: #166534; background: #dcfce7; border: 1px solid #86efac; padding: 10px 14px; border-radius: 6px; font-size: 13px; font-weight: bold; margin-bottom: 14px; text-align: center;">
+                            ✅ Datos guardados con éxito. No volverás a tener que introducir el email.
+                        </div>
+
+                        <button class="btn-menu btn-main" onclick="guardarConfiguracion()">
+                            Guardar Configuración
+                        </button>
+
+                        <div style="margin-top: 15px; text-align: center;">
+                            <button onclick="cerrarSesionTaller()" style="background: transparent; border: 1px solid #ccc; color: #666; padding: 8px 16px; border-radius: 6px; font-size: 12px; cursor: pointer;">
+                                Cerrar Sesión / Cambiar Email
+                            </button>
+                        </div>
+
+                        <!-- Pié Corporativo DM CAR -->
+                        <div class="pie-wrapper">
+                            <img src="/public/images/pie_dmcar.png" alt="DM CAR - Tu vehículo en buenas manos" class="doc-banner-footer">
+                        </div>
+
+                        <!-- Indicador de retorno -->
+                        <div class="btn-guia-scroll" style="text-align: center; margin-top: 20px;">
+                            <button onclick="irAPagina(1)" style="background: transparent; border: 1px dashed #aaa; color: #666; padding: 6px 14px; border-radius: 20px; font-size: 12px; cursor: pointer;">
+                                ◀ Volver a <strong>Facturas</strong>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        // --- WIDGET TIEMPO Y CLIMA ---
+        const DIGIT_SEGMENTS = {
+            '0': ['a', 'b', 'c', 'd', 'e', 'f'], '1': ['b', 'c'],
+            '2': ['a', 'b', 'g', 'e', 'd'], '3': ['a', 'b', 'g', 'c', 'd'],
+            '4': ['f', 'g', 'b', 'c'], '5': ['a', 'f', 'g', 'c', 'd'],
+            '6': ['a', 'f', 'e', 'd', 'c', 'g'], '7': ['a', 'b', 'c'],
+            '8': ['a', 'b', 'c', 'd', 'e', 'f', 'g'], '9': ['a', 'b', 'c', 'd', 'f', 'g']
+        };
+        const SEGMENT_PATHS = {
+            a: 'M 10 5 L 44 5 L 38 12 L 16 12 Z',
+            b: 'M 45 7 L 49 11 L 49 43 L 44 47 L 39 42 L 39 13 Z',
+            c: 'M 44 49 L 49 53 L 49 85 L 45 89 L 39 83 L 39 54 Z',
+            d: 'M 16 84 L 38 84 L 44 91 L 10 91 Z',
+            e: 'M 9 49 L 15 54 L 15 83 L 9 89 L 5 85 L 5 53 Z',
+            f: 'M 9 7 L 15 13 L 15 42 L 9 47 L 5 43 L 5 11 Z',
+            g: 'M 10 48 L 15 44 L 39 44 L 44 48 L 39 52 L 15 52 Z'
+        };
+
+        function renderSegmentDigit(char, isSmall = false) {
+            const active = DIGIT_SEGMENTS[char] || [];
+            let paths = '';
+            for (const [seg, pathData] of Object.entries(SEGMENT_PATHS)) {
+                const isLit = active.includes(seg);
+                const fill = isLit ? '#fffbc2' : 'rgba(255, 251, 194, 0.07)';
+                paths += `<path d="${pathData}" fill="${fill}" style="transition: fill 80ms ease-out;" />`;
+            }
+            return `<svg viewBox="0 0 54 96" style="height: 100%; width: auto; filter: drop-shadow(0 0 8px rgba(255,251,194,0.6));">${paths}</svg>`;
+        }
+
+        function renderSegmentColon() {
+            return `<svg viewBox="0 0 18 96" style="height: 100%; width: auto; margin: 0 1px; filter: drop-shadow(0 0 8px rgba(255,251,194,0.6));">
+                <rect x="5" y="27" width="8" height="8" rx="1.5" fill="#fffbc2" />
+                <rect x="5" y="61" width="8" height="8" rx="1.5" fill="#fffbc2" />
+            </svg>`;
+        }
+
+        function actualizarReloj() {
+            const ahora = new Date();
+            let horas = ahora.getHours();
+            const ampm = horas >= 12 ? 'PM' : 'AM';
+            horas = horas % 12 || 12;
+            
+            const hStr = String(horas).padStart(2, '0');
+            const mStr = String(ahora.getMinutes()).padStart(2, '0');
+            const sStr = String(ahora.getSeconds()).padStart(2, '0');
+            
+            let html = '';
+            html += renderSegmentDigit(hStr[0]);
+            html += renderSegmentDigit(hStr[1]);
+            html += renderSegmentColon();
+            html += renderSegmentDigit(mStr[0]);
+            html += renderSegmentDigit(mStr[1]);
+            html += `<div style="height: 60%; display: flex; gap: 3px; align-items: flex-end; margin-left: 6px; margin-bottom: 2px;">`;
+            html += renderSegmentDigit(sStr[0], true);
+            html += renderSegmentDigit(sStr[1], true);
+            html += `</div>`;
+            
+            const clockEl = document.getElementById('svg-clock-container');
+            if (clockEl) clockEl.innerHTML = html;
+            const ampmEl = document.getElementById('ampm');
+            if (ampmEl) ampmEl.innerText = ampm;
+            
+            const diaSemana = ahora.toLocaleDateString('es-ES', { weekday: 'long' }).toUpperCase();
+            const diaNum = ahora.getDate();
+            const mesCompleto = ahora.toLocaleDateString('es-ES', { month: 'long' }).toUpperCase();
+            const anioCorto = String(ahora.getFullYear()).slice(-2);
+            
+            const fechaEl = document.getElementById('fecha-widget');
+            if (fechaEl) {
+                fechaEl.innerHTML = `
+                    <div style="font-size: 28px; font-weight: bold; line-height: 1;">${diaSemana} ${diaNum}</div>
+                    <div style="font-size: 24px; font-weight: bold; color: #ccc; line-height: 1.1; margin-top: 5px; letter-spacing: 0.5px;">${mesCompleto} ${anioCorto}</div>
+                `;
+            }
+        }
+        setInterval(actualizarReloj, 1000);
+        actualizarReloj();
+
+        function getColorTemperatura(temp) {
+            if (temp < 15) return '#3b82f6';
+            if (temp < 25) return '#10b981';
+            if (temp < 30) return '#f59e0b';
+            return '#ef4444';
+        }
+
+        async function obtenerTemperatura() {
+            try {
+                const response = await fetch('https://api.open-meteo.com/v1/forecast?latitude=36.7202&longitude=-4.4203&current_weather=true');
+                const data = await response.json();
+                if (data && data.current_weather) {
+                    const temp = Math.round(data.current_weather.temperature);
+                    const el = document.getElementById('temp-widget');
+                    if (el) {
+                        el.innerText = `${temp}°C`;
+                        el.style.color = getColorTemperatura(temp);
+                    }
+                }
+            } catch (error) {
+                console.error("Error obteniendo temperatura:", error);
+                const el = document.getElementById('temp-widget');
+                if (el && (el.innerText === '- °C' || el.innerText === '-')) {
+                    el.innerText = '24°C';
+                    el.style.color = '#10b981';
+                }
+            }
+        }
+        obtenerTemperatura();
+        setInterval(obtenerTemperatura, 30 * 60 * 1000);
+
+        // --- INICIALIZACIÓN DE FECHAS ---
+        const fechaHoy = new Date().toLocaleDateString('es-ES');
+        if (document.getElementById('doc-fecha-pres')) document.getElementById('doc-fecha-pres').value = fechaHoy;
+        if (document.getElementById('doc-fecha-fac')) document.getElementById('doc-fecha-fac').value = fechaHoy;
+
+        // --- LÓGICA DE ACCESO Y AUTO-LOGIN ---
+        let emailUsuario = '';
+
+        function esRutaVisor() {
+            const path = window.location.pathname;
+            const search = window.location.search;
+            const parts = path.split('/').filter(Boolean);
+            return (parts[0] === 'p' && parts[1]) || search.includes('d=') || search.includes('id=') || search.includes('ver=') || search.includes('p=');
+        }
+
+        // Si entramos por enlace de visor, ocultar inmediatamente la pantalla de acceso
+        if (esRutaVisor()) {
+            document.body.classList.add('modo-documento', 'modo-visor-cliente');
+            const accesoInit = document.getElementById('vista-acceso');
+            if (accesoInit) accesoInit.classList.add('hidden');
+        }
+
+        function verificarAutoAcceso() {
+            const raw = localStorage.getItem('gestarian_lite_config');
+            if (!raw) return;
+            try {
+                const cfg = JSON.parse(raw);
+                if (cfg.nombre && cfg.cif && cfg.domicilio && cfg.telefono && cfg.email) {
+                    document.getElementById('cfg-nombre').value = cfg.nombre;
+                    document.getElementById('cfg-cif').value = cfg.cif;
+                    document.getElementById('cfg-domicilio').value = cfg.domicilio;
+                    document.getElementById('cfg-telefono').value = cfg.telefono;
+                    document.getElementById('cfg-email').value = cfg.email;
+                    emailUsuario = cfg.email;
+
+                    // Acceso directo a la segunda pantalla solo si NO estamos en una ruta de visor de cliente
+                    if (!esRutaVisor()) {
+                        mostrarSegundaPantalla();
+                    }
+                }
+            } catch (e) {
+                console.error("Error verificando auto-acceso:", e);
+            }
+        }
+        verificarAutoAcceso();
+
+        function accederHerramienta() {
+            const emailInput = document.getElementById('user-email').value.trim();
+            if (!emailInput || !emailInput.includes('@')) {
+                document.getElementById('modal-alerta-email').classList.remove('hidden');
+                return;
+            }
+            emailUsuario = emailInput;
+            const cfgEmail = document.getElementById('cfg-email');
+            if (cfgEmail && !cfgEmail.value) {
+                cfgEmail.value = emailInput;
+            }
+            mostrarSegundaPantalla();
+        }
+
+        function mostrarSegundaPantalla() {
+            document.getElementById('vista-acceso').classList.add('hidden');
+            const docApp = document.getElementById('contenedor-app-paginas');
+            if (docApp) docApp.classList.add('hidden');
+            document.body.classList.remove('modo-documento');
+            document.getElementById('widget-tiempo').classList.remove('hidden');
+            document.getElementById('vista-menu').classList.remove('hidden');
+            // Mostrar ambos botones simétricos exclusivamente en la segunda pantalla
+            document.getElementById('btn-volver-pantalla1').classList.remove('hidden');
+            document.getElementById('btn-config-pantalla2').classList.remove('hidden');
+        }
+
+        function volverAcceso() {
+            document.getElementById('btn-volver-pantalla1').classList.add('hidden');
+            document.getElementById('btn-config-pantalla2').classList.add('hidden');
+            document.getElementById('vista-menu').classList.add('hidden');
+            const appPaginas = document.getElementById('contenedor-app-paginas');
+            if (appPaginas) appPaginas.classList.add('hidden');
+            document.body.classList.remove('modo-documento');
+            document.getElementById('widget-tiempo').classList.remove('hidden');
+            document.getElementById('vista-acceso').classList.remove('hidden');
+        }
+
+        function abrirFormulario(tipo) {
+            document.getElementById('vista-menu').classList.add('hidden');
+            document.getElementById('widget-tiempo').classList.add('hidden');
+            document.getElementById('btn-volver-pantalla1').classList.add('hidden');
+            document.getElementById('btn-config-pantalla2').classList.add('hidden');
+            document.body.classList.add('modo-documento');
+            document.getElementById('contenedor-app-paginas').classList.remove('hidden');
+            const btnNav = document.getElementById('btn-volver-nav');
+            if (tipo === 'Presupuesto') {
+                if (btnNav) btnNav.style.display = 'flex';
+                irAPagina(0);
+            } else if (tipo === 'Factura') {
+                if (btnNav) btnNav.style.display = 'flex';
+                irAPagina(1);
+            } else if (tipo === 'Configuracion') {
+                if (btnNav) btnNav.style.display = 'none';
+                irAPagina(2);
+            }
+        }
+
+        function volverAlMenu() {
+            document.getElementById('contenedor-app-paginas').classList.add('hidden');
+            document.body.classList.remove('modo-documento');
+            document.getElementById('widget-tiempo').classList.remove('hidden');
+            document.getElementById('vista-menu').classList.remove('hidden');
+            document.getElementById('btn-volver-pantalla1').classList.remove('hidden');
+            document.getElementById('btn-config-pantalla2').classList.remove('hidden');
+        }
+
+        function cerrarAlertaEmail() {
+            document.getElementById('modal-alerta-email').classList.add('hidden');
+            document.getElementById('user-email').focus();
+        }
+
+        function abrirPrivacidad() {
+            document.getElementById('vista-acceso').classList.add('hidden');
+            document.getElementById('vista-privacidad').classList.remove('hidden');
+        }
+
+        function cerrarPrivacidad() {
+            document.getElementById('vista-privacidad').classList.add('hidden');
+            document.getElementById('vista-acceso').classList.remove('hidden');
+        }
+
+        // --- NAVEGACIÓN SCROLL ENTRE PÁGINAS ---
+        let paginaActualIndex = 0;
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        function irAPagina(index) {
+            const container = document.getElementById('scroll-paginas-container');
+            if (!container) return;
+            paginaActualIndex = Math.max(0, Math.min(2, index));
+            container.scrollTo({
+                left: paginaActualIndex * container.clientWidth,
+                behavior: 'smooth'
+            });
+            actualizarTabsActivas(paginaActualIndex);
+        }
+
+        function actualizarTabsActivas(index) {
+            paginaActualIndex = index;
+            for (let i = 0; i < 3; i++) {
+                const tab = document.getElementById('tab-btn-' + i);
+                if (tab) {
+                    if (i === index) tab.classList.add('active');
+                    else tab.classList.remove('active');
+                }
+            }
+
+            // Eliminar/ocultar el botón redondo de volver de arriba a la derecha en la página configuración (index === 2)
+            const btnNav = document.getElementById('btn-volver-nav');
+            if (btnNav) {
+                if (index === 2) {
+                    btnNav.style.display = 'none';
+                } else {
+                    btnNav.style.display = 'flex';
+                }
+            }
+
+            document.body.classList.remove('imprimiendo-presupuesto', 'imprimiendo-factura');
+            if (index === 0) {
+                document.body.classList.add('imprimiendo-presupuesto');
+            } else if (index === 1) {
+                document.body.classList.add('imprimiendo-factura');
+            }
+        }
+
+        const scrollContainer = document.getElementById('scroll-paginas-container');
+        if (scrollContainer) {
+            let timerScroll = null;
+            scrollContainer.addEventListener('scroll', () => {
+                window.clearTimeout(timerScroll);
+                timerScroll = setTimeout(() => {
+                    const idx = Math.round(scrollContainer.scrollLeft / scrollContainer.clientWidth);
+                    actualizarTabsActivas(idx);
+                }, 50);
+            }, { passive: true });
+
+            scrollContainer.addEventListener('touchstart', (e) => {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+            }, { passive: true });
+
+            scrollContainer.addEventListener('touchend', (e) => {
+                const deltaX = e.changedTouches[0].clientX - touchStartX;
+                const deltaY = e.changedTouches[0].clientY - touchStartY;
+                // Si el gesto es horizontal con desplazamiento mayor a 60px
+                if (Math.abs(deltaX) > 60 && Math.abs(deltaX) > Math.abs(deltaY) * 1.3) {
+                    if (deltaX < 0 && paginaActualIndex < 2) {
+                        irAPagina(paginaActualIndex + 1);
+                    } else if (deltaX > 0 && paginaActualIndex > 0) {
+                        irAPagina(paginaActualIndex - 1);
+                    }
+                }
+            }, { passive: true });
+        }
+
+        // --- CÁLCULO DE LÍNEAS Y TOTALES ---
+        function calcularFilas(tipo) {
+            const sufijo = tipo === 'Presupuesto' ? '-pres' : '-fac';
+            const pageId = tipo === 'Presupuesto' ? 'pagina-presupuestos' : 'pagina-facturas';
+            const contenedor = document.getElementById(pageId);
+            if (!contenedor) return;
+
+            let baseImponible = 0;
+            const rows = contenedor.querySelectorAll('.desglose-row');
+            rows.forEach(row => {
+                const cant = parseFloat(row.querySelector('.fila-cant').value) || 0;
+                const precio = parseFloat(row.querySelector('.fila-precio').value) || 0;
+                const inputTotal = row.querySelector('.fila-total');
+                if (cant > 0 && precio > 0) {
+                    const totalFila = cant * precio;
+                    inputTotal.value = totalFila.toFixed(2);
+                    baseImponible += totalFila;
+                } else {
+                    inputTotal.value = '';
+                }
+            });
+            document.getElementById('doc-base' + sufijo).value = baseImponible.toFixed(2);
+            calcularTotales(tipo);
+        }
+
+        function calcularTotales(tipo) {
+            const sufijo = tipo === 'Presupuesto' ? '-pres' : '-fac';
+            const baseImponible = parseFloat(document.getElementById('doc-base' + sufijo).value) || 0;
+            let aplicarIva = true;
+            if (tipo === 'Presupuesto') {
+                const chk = document.getElementById('toggle-iva-pres');
+                aplicarIva = chk ? chk.checked : false;
+            }
+            let iva = 0;
+            const lineaIva = document.getElementById('linea-iva' + sufijo);
+            if (aplicarIva) {
+                iva = baseImponible * 0.21;
+                if (lineaIva) lineaIva.style.display = 'flex';
+            } else {
+                if (lineaIva) lineaIva.style.display = 'none';
+            }
+            const totalFinal = baseImponible + iva;
+            document.getElementById('doc-iva' + sufijo).value = iva.toFixed(2);
+            document.getElementById('doc-total' + sufijo).value = totalFinal.toFixed(2);
+        }
+
+        function obtenerDatos(tipo) {
+            const sufijo = tipo === 'Presupuesto' ? '-pres' : '-fac';
+            const chk = document.getElementById('toggle-iva-pres');
+            const aplicaIva = tipo === 'Factura' ? true : (chk ? chk.checked : false);
+            return {
+                cliente: document.getElementById('doc-cliente' + sufijo).value || 'Cliente',
+                concepto: document.getElementById('doc-concepto' + sufijo).value || 'Trabajos de taller',
+                base: document.getElementById('doc-base' + sufijo).value || '0.00',
+                iva: document.getElementById('doc-iva' + sufijo).value || '0.00',
+                total: document.getElementById('doc-total' + sufijo).value || '0.00',
+                aplicaIva: aplicaIva
+            };
+        }
+
+        // =========================================================================
+        // --- INTEGRACIÓN SUPABASE, ESTADOS Y ENVÍO POR WHATSAPP CON ENLACE ---
+        // =========================================================================
+        const SUPABASE_URL = 'https://qjeqvgbsathhxikwdcco.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqZXF2Z2JzYXRoaHhpa3dkY2NvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg2OTI2NDAsImV4cCI6MjEwNDI2ODY0MH0.sHdOYpsU1WgEhZkZkmSyZBENy0_lJyPJf8FDlb8wkHE';
+
+        let supabaseClient = null;
+        if (window.supabase && typeof window.supabase.createClient === 'function') {
+            try {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            } catch (e) {
+                console.warn("[Supabase] Error inicializando cliente:", e);
+            }
+        }
+
+        // Estado lógico de guardado por tipo de documento
+        const estadoDocumentos = {
+            'Presupuesto': { guardado: false, id: null, url: null, datos: null },
+            'Factura': { guardado: false, id: null, url: null, datos: null }
+        };
+
+        // --- SERIALIZACIÓN COMPACTA Y CODIFICACIÓN BASE64URL PARA ENLACES AUTOCONTENIDOS ---
+        function compactarDoc(payload) {
+            return {
+                id: payload.id || '',
+                sid: payload.short_id || '',
+                t: payload.tipo === 'Presupuesto' ? 'P' : 'F',
+                n: payload.numero || '',
+                f: payload.fecha || '',
+                c: {
+                    n: payload.cliente?.nombre || '',
+                    d: payload.cliente?.dni || '',
+                    t: payload.cliente?.telefono || '',
+                    dir: payload.cliente?.direccion || '',
+                    p: payload.cliente?.poblacion || '',
+                    cp: payload.cliente?.cp || ''
+                },
+                v: {
+                    m: payload.vehiculo?.marca || '',
+                    mo: payload.vehiculo?.modelo || '',
+                    ma: payload.vehiculo?.matricula || '',
+                    km: payload.vehiculo?.km || ''
+                },
+                i: (payload.conceptos || []).map(item => [
+                    item.cantidad || 1,
+                    item.descripcion || item.concepto || '',
+                    item.precio || 0,
+                    item.total || 0
+                ]),
+                b: payload.base || '0.00',
+                iva: payload.iva || '0.00',
+                tot: payload.total || '0.00',
+                ai: payload.aplicaIva ? 1 : 0,
+                obs: payload.observaciones || ''
+            };
+        }
+
+        function descompactarDoc(c) {
+            const tipoDoc = c.t === 'F' ? 'Factura' : 'Presupuesto';
+            const shortIdDoc = c.sid || (c.t === 'F' ? 'F-' : 'P-') + Date.now().toString(36).toUpperCase();
+            return {
+                id: c.id || shortIdDoc,
+                short_id: shortIdDoc,
+                tipo: tipoDoc,
+                numero: c.n || '',
+                fecha: c.f || '',
+                cliente: {
+                    nombre: c.c?.n || '',
+                    dni: c.c?.d || '',
+                    telefono: c.c?.t || '',
+                    direccion: c.c?.dir || '',
+                    poblacion: c.c?.p || '',
+                    cp: c.c?.cp || ''
+                },
+                vehiculo: {
+                    marca: c.v?.m || '',
+                    modelo: c.v?.mo || '',
+                    matricula: c.v?.ma || '',
+                    km: c.v?.km || ''
+                },
+                conceptos: (c.i || []).map((it, idx) => ({
+                    id: String(idx + 1),
+                    cantidad: it[0],
+                    descripcion: it[1],
+                    precio: it[2],
+                    total: it[3]
+                })),
+                base: c.b || '0.00',
+                iva: c.iva || '0.00',
+                total: c.tot || '0.00',
+                aplicaIva: !!c.ai,
+                observaciones: c.obs || ''
+            };
+        }
+
+        function encodeDocPayload(payload) {
+            try {
+                const compact = compactarDoc(payload);
+                const json = JSON.stringify(compact);
+                const utf8 = encodeURIComponent(json).replace(/%([0-9A-F]{2})/g, (match, p1) => {
+                    return String.fromCharCode('0x' + p1);
+                });
+                const b64 = btoa(utf8);
+                return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+            } catch (e) {
+                console.warn('[DocPayload] Error codificando:', e);
+                return '';
+            }
+        }
+
+        function decodeDocPayload(str) {
+            if (!str) return null;
+            try {
+                let b64 = str.replace(/-/g, '+').replace(/_/g, '/');
+                while (b64.length % 4) b64 += '=';
+                const binary = atob(b64);
+                const utf8 = Array.from(binary).map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('');
+                const json = decodeURIComponent(utf8);
+                const compact = JSON.parse(json);
+                return descompactarDoc(compact);
+            } catch (e) {
+                console.warn('[DocPayload] Error decodificando:', e);
+                return null;
+            }
+        }
+
+        // Toast de notificación en pantalla
+        function mostrarToast(mensaje, duracion = 3500) {
+            const toast = document.getElementById('toast-notificacion');
+            if (!toast) return;
+            toast.innerHTML = mensaje;
+            toast.classList.add('visible');
+            if (toast.timerToast) clearTimeout(toast.timerToast);
+            toast.timerToast = setTimeout(() => {
+                toast.classList.remove('visible');
+            }, duracion);
+        }
+
+        // Si el usuario modifica campos tras guardar, el botón de WhatsApp vuelve a gris hasta guardar los cambios
+        function marcarDocumentoComoModificado(tipo) {
+            if (estadoDocumentos[tipo] && estadoDocumentos[tipo].guardado) {
+                estadoDocumentos[tipo].guardado = false;
+                const btnWa = document.getElementById(tipo === 'Presupuesto' ? 'btn-wa-pres' : 'btn-wa-fac');
+                if (btnWa) {
+                    btnWa.disabled = true;
+                    btnWa.classList.remove('guardado');
+                    btnWa.classList.add('no-guardado');
+                    btnWa.title = "Guarda primero el documento para enviar por WhatsApp";
+                }
+            }
+        }
+
+        // --- GUARDADO EN SUPABASE (CON FALLBACK RESILIENTE A LOCALSTORAGE) ---
+        async function guardarDocumento(tipo) {
+            const sufijo = tipo === 'Presupuesto' ? '-pres' : '-fac';
+            const pageId = tipo === 'Presupuesto' ? 'pagina-presupuestos' : 'pagina-facturas';
+            const btnGuardar = document.querySelector(`#${pageId} .btn-save`);
+            const textoOriginal = btnGuardar ? btnGuardar.innerHTML : 'Guardar';
+
+            if (btnGuardar) {
+                btnGuardar.disabled = true;
+                btnGuardar.innerHTML = 'Guardando...';
+            }
+
+            try {
+                // 1. Recopilar datos del formulario
+                const numero = (document.getElementById('doc-num' + sufijo)?.value || '').trim() || 'S/N';
+                const fecha = (document.getElementById('doc-fecha' + sufijo)?.value || '').trim() || new Date().toLocaleDateString('es-ES');
+
+                const cliente = {
+                    nombre: (document.getElementById('doc-cliente' + sufijo)?.value || '').trim() || 'Cliente',
+                    dni: (document.getElementById('doc-dni' + sufijo)?.value || '').trim(),
+                    direccion: (document.getElementById('doc-direccion' + sufijo)?.value || '').trim(),
+                    poblacion: (document.getElementById('doc-poblacion' + sufijo)?.value || '').trim(),
+                    cp: (document.getElementById('doc-cp' + sufijo)?.value || '').trim(),
+                    telefono: (document.getElementById('doc-telefono' + sufijo)?.value || '').trim()
+                };
+
+                const vehiculo = {
+                    marca: (document.getElementById('doc-marca' + sufijo)?.value || '').trim(),
+                    modelo: (document.getElementById('doc-modelo' + sufijo)?.value || '').trim(),
+                    matricula: (document.getElementById('doc-matricula' + sufijo)?.value || '').trim() || 'SIN-MATRICULA',
+                    km: (document.getElementById('doc-km' + sufijo)?.value || '').trim()
+                };
+
+                const contenedor = document.getElementById(pageId);
+                const filas = contenedor ? contenedor.querySelectorAll('.desglose-row') : [];
+                const conceptos = [];
+
+                filas.forEach((fila, idx) => {
+                    const cantVal = fila.querySelector('.fila-cant')?.value?.trim();
+                    const descVal = fila.querySelector('.fila-desc')?.value?.trim();
+                    const precioVal = fila.querySelector('.fila-precio')?.value?.trim();
+                    const totalVal = fila.querySelector('.fila-total')?.value?.trim();
+
+                    if (descVal || precioVal || totalVal) {
+                        const cant = parseFloat(cantVal) || 1;
+                        const precio = parseFloat(precioVal) || 0;
+                        let total = parseFloat(totalVal);
+                        if (isNaN(total) || total === 0) total = cant * precio;
+                        conceptos.push({
+                            id: String(idx + 1),
+                            cantidad: cant,
+                            descripcion: descVal || 'Trabajos de taller',
+                            precio: precio,
+                            total: total
+                        });
+                    }
+                });
+
+                if (conceptos.length === 0) {
+                    const baseVal = parseFloat(document.getElementById('doc-base' + sufijo)?.value) || 0;
+                    conceptos.push({
+                        id: '1',
+                        cantidad: 1,
+                        descripcion: 'Trabajos de reparación / taller',
+                        precio: baseVal,
+                        total: baseVal
+                    });
+                }
+
+                const datosTotales = obtenerDatos(tipo);
+                const observaciones = (document.getElementById('doc-obs' + sufijo)?.value || '').trim();
+
+                const docPayload = {
+                    tipo: tipo,
+                    numero: numero,
+                    fecha: fecha,
+                    cliente: cliente,
+                    vehiculo: vehiculo,
+                    conceptos: conceptos,
+                    base: datosTotales.base,
+                    iva: datosTotales.iva,
+                    total: datosTotales.total,
+                    aplicaIva: datosTotales.aplicaIva,
+                    observaciones: observaciones,
+                    created_at: new Date().toISOString()
+                };
+
+                let docId = null;
+                let docShortId = null; // Short identifier for clean URLs
+
+                // 2. Insert en Supabase (si está disponible y online)
+                if (supabaseClient) {
+                    try {
+                        let clienteId = null;
+                        if (cliente.nombre) {
+                            const { data: cliExist } = await supabaseClient
+                                .from('clientes')
+                                .select('id')
+                                .or(`dni.eq.${cliente.dni || 'EMPTY'},telefono.eq.${cliente.telefono || 'EMPTY'},nombre.eq.${cliente.nombre}`)
+                                .limit(1);
+
+                            if (cliExist && cliExist.length > 0) {
+                                clienteId = cliExist[0].id;
+                            } else {
+                                const { data: newCli } = await supabaseClient
+                                    .from('clientes')
+                                    .insert([{
+                                        nombre: cliente.nombre,
+                                        dni: cliente.dni || null,
+                                        telefono: cliente.telefono || null,
+                                        direccion: cliente.direccion || null
+                                    }])
+                                    .select('id')
+                                    .single();
+                                if (newCli) clienteId = newCli.id;
+                            }
+                        }
+
+                        let vehiculoId = null;
+                        if (clienteId && vehiculo.matricula) {
+                            const { data: vehExist } = await supabaseClient
+                                .from('vehiculos')
+                                .select('id')
+                                .eq('matricula', vehiculo.matricula)
+                                .limit(1);
+
+                            if (vehExist && vehExist.length > 0) {
+                                vehiculoId = vehExist[0].id;
+                            } else {
+                                const { data: newVeh } = await supabaseClient
+                                    .from('vehiculos')
+                                    .insert([{
+                                        cliente_id: clienteId,
+                                        matricula: vehiculo.matricula,
+                                        marca: vehiculo.marca || null,
+                                        modelo: vehiculo.modelo || null
+                                    }])
+                                    .select('id')
+                                    .single();
+                                if (newVeh) vehiculoId = newVeh.id;
+                            }
+                        }
+
+                        const tabla = tipo === 'Presupuesto' ? 'presupuestos' : 'facturas';
+                        const rowInsert = {
+                            numero: numero,
+                            conceptos: conceptos,
+                            total: parseFloat(datosTotales.total) || 0,
+                            observaciones: observaciones
+                        };
+                        if (clienteId) rowInsert.cliente_id = clienteId;
+                        if (vehiculoId) rowInsert.vehiculo_id = vehiculoId;
+
+                        // Generar identificador corto y asignarlo al registro
+                        const shortPrefix = tipo === 'Presupuesto' ? 'P' : 'F';
+                        const shortCode = Math.random().toString(36).substring(2, 7).toUpperCase();
+                        docShortId = `${shortPrefix}-${shortCode}`;
+                        rowInsert.short_id = docShortId;
+
+                        if (tipo === 'Presupuesto') {
+                            rowInsert.estado = 'pendiente';
+                        } else {
+                            rowInsert.estado_cobro = 'pendiente';
+                            rowInsert.fecha = new Date().toISOString().split('T')[0];
+                        }
+
+                        const { data: savedDoc, error: insertError } = await supabaseClient
+                            .from(tabla)
+                            .insert([rowInsert])
+                            .select('id, short_id')
+                            .single();
+
+                        if (savedDoc && savedDoc.id) {
+                            docId = savedDoc.id;
+                            if (savedDoc.short_id) {
+                                docShortId = savedDoc.short_id;
+                            }
+                            console.log(`[Supabase] ${tipo} guardado con ID:`, docId);
+                            // shortId ya generado antes del insert
+                        } else if (insertError) {
+                            console.warn(`[Supabase] Inserción fallida:`, insertError.message);
+                        }
+                    } catch (supaErr) {
+                        console.warn("[Supabase] Fallo de conexión:", supaErr);
+                    }
+                }
+
+                // Generar UUID único estándar si Supabase no estuvo disponible
+                if (!docId) {
+                    docId = (typeof crypto !== 'undefined' && crypto.randomUUID) 
+                        ? crypto.randomUUID() 
+                        : 'doc_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+                }
+
+                // Asegurar identificador corto para el documento
+                if (!docShortId) {
+                    const shortPrefix = tipo === 'Presupuesto' ? 'P' : 'F';
+                    const shortCode = Math.random().toString(36).substring(2, 7).toUpperCase();
+                    docShortId = `${shortPrefix}-${shortCode}`;
+                }
+
+                docPayload.id = docId;
+                docPayload.short_id = docShortId;
+
+                // Almacenar siempre en localStorage para disponibilidad inmediata y offline
+                localStorage.setItem('gestarian_doc_' + docId, JSON.stringify(docPayload));
+                localStorage.setItem('gestarian_short_' + docShortId, docId);
+
+                // Construir URL limpia del documento con datos autocontenidos
+                const baseUrl = window.location.origin;
+                const encodedData = encodeDocPayload(docPayload);
+                const urlDoc = encodedData 
+                    ? `${baseUrl}/p/${docShortId}?d=${encodedData}` 
+                    : `${baseUrl}/p/${docShortId}`;
+
+                // 3. Cambiar estado lógico a "guardado"
+                estadoDocumentos[tipo] = {
+                    guardado: true,
+                    id: docId,
+                    shortId: docShortId,
+                    url: urlDoc,
+                    datos: docPayload
+                };
+
+                // 4. Cambiar el icono de WhatsApp a color VERDE y activar animación pulso/bote (scale 1.10)
+                const btnWa = document.getElementById(tipo === 'Presupuesto' ? 'btn-wa-pres' : 'btn-wa-fac');
+                if (btnWa) {
+                    btnWa.disabled = false;
+                    btnWa.classList.remove('no-guardado');
+                    btnWa.classList.add('guardado');
+                    btnWa.classList.remove('animar-pulso');
+                    void btnWa.offsetWidth; // Reflow para reiniciar la animación
+                    // aumentar escala al 15% en la animación
+                    btnWa.style.setProperty('--pulse-scale', '1.15');
+                    btnWa.classList.add('animar-pulso');
+                    btnWa.title = "Enviar por WhatsApp (Listo para enviar)";
+                    setTimeout(() => {
+                        btnWa.classList.remove('animar-pulso');
+                    }, 850);
+                }
+
+                if (btnGuardar) {
+                    btnGuardar.disabled = false;
+                    btnGuardar.innerHTML = '✓ Guardado';
+                    setTimeout(() => {
+                        btnGuardar.innerHTML = textoOriginal;
+                    }, 3000);
+                }
+
+                mostrarToast(`✓ ${tipo} guardado correctamente. ¡WhatsApp listo para enviar!`);
+
+            } catch (err) {
+                console.error("Error al guardar documento:", err);
+                if (btnGuardar) {
+                    btnGuardar.disabled = false;
+                    btnGuardar.innerHTML = textoOriginal;
+                }
+                alert("Hubo un error al procesar el guardado. Por favor, revisa los datos e inténtalo de nuevo.");
+            }
+        }
+
+        // --- ENVÍO DE WHATSAPP CON ENLACE DIGITAL LIMPIO ---
+        function enviarWhatsApp(tipo) {
+            const estado = estadoDocumentos[tipo];
+            if (!estado || !estado.guardado) {
+                alert("Por favor, pulsa primero en 'Guardar' para registrar el documento antes de enviarlo por WhatsApp.");
+                return;
+            }
+
+            const sufijo = tipo === 'Presupuesto' ? '-pres' : '-fac';
+            const telInput = document.getElementById('doc-telefono' + sufijo);
+            const rawTel = telInput ? telInput.value.trim() : '';
+
+            if (!rawTel) {
+                alert("Por favor, introduce el número de teléfono del cliente en DATOS DEL CLIENTE para enviar el WhatsApp.");
+                if (telInput) telInput.focus();
+                return;
+            }
+
+            let telefono = rawTel.replace(/[^0-9+]/g, '');
+            if (telefono.startsWith('+')) {
+                telefono = telefono.substring(1);
+            } else if (telefono.length === 9) {
+                telefono = '34' + telefono;
+            }
+
+            // Generar mensaje de WhatsApp con formato exacto y URL corta
+            const urlDocumento = estado.url;
+            let mensaje = '';
+            if (tipo === 'Presupuesto') {
+                mensaje = `*DM CAR Chapa y Pintura*\n\nYa tiene disponible su presupuesto. Puede consultarlo y descargarlo o imprimirlo desde el siguiente enlace.\n\n${urlDocumento}\n\nGracias por elegirnos, tu vehículo en buenas manos.`;
+            } else {
+                mensaje = `*DM CAR Chapa y Pintura*\n\nYa tiene disponible su factura. Puede consultarla y descargarla o imprimirla desde el siguiente enlace.\n\n${urlDocumento}\n\nGracias por elegirnos, tu vehículo en buenas manos.`;
+            }
+
+            // Abrir WhatsApp con el enlace y mensaje preconfigurado sin perder la vista actual
+            const waUrl = `https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`;
+            const waWin = window.open(waUrl, '_blank');
+            if (!waWin || waWin.closed || typeof waWin.closed === 'undefined') {
+                window.location.href = waUrl;
+            }
+        }
+
+        // Escuchar cambios en los formularios para resetear el botón si el documento es editado
+        document.addEventListener('DOMContentLoaded', () => {
+            const presPage = document.getElementById('pagina-presupuestos');
+            if (presPage) {
+                presPage.addEventListener('input', (e) => {
+                    if (!e.target.closest('.action-bar')) marcarDocumentoComoModificado('Presupuesto');
+                });
+            }
+            const facPage = document.getElementById('pagina-facturas');
+            if (facPage) {
+                facPage.addEventListener('input', (e) => {
+                    if (!e.target.closest('.action-bar')) marcarDocumentoComoModificado('Factura');
+                });
+            }
+            comprobarModoVisor();
+        });
+
+        // Ejecutar inmediatamente también si el DOM ya está listo
+        if (document.readyState !== 'loading') {
+            comprobarModoVisor();
+        }
+
+        // --- MODO VISOR DIGITAL DE CLIENTE (VISUALIZAR Y DESCARGAR EN PDF) ---
+        async function comprobarModoVisor() {
+            if (!esRutaVisor()) return;
+
+            // Ocultar de inmediato las vistas administrativas para evitar parpadeos
+            const acceso = document.getElementById('vista-acceso');
+            if (acceso) acceso.classList.add('hidden');
+            const menu = document.getElementById('vista-menu');
+            if (menu) menu.classList.add('hidden');
+            const widgetTiempo = document.getElementById('widget-tiempo');
+            if (widgetTiempo) widgetTiempo.classList.add('hidden');
+            document.body.classList.add('modo-documento', 'modo-visor-cliente');
+
+            const path = window.location.pathname;
+            const urlParams = new URLSearchParams(window.location.search);
+            const pathParts = path.split('/').filter(Boolean);
+
+            let shortId = (pathParts[0] === 'p' && pathParts[1]) ? pathParts[1] : (urlParams.get('p') || '');
+            const encodedData = urlParams.get('d') || '';
+            const idDoc = urlParams.get('id') || urlParams.get('ver') || '';
+
+            let doc = null;
+
+            // 1️⃣ Capa 1: Decodificar directamente desde el parámetro de la URL (datos autocontenidos y offline)
+            if (encodedData) {
+                try {
+                    doc = decodeDocPayload(encodedData);
+                    if (doc) {
+                        console.log('[Visor] Documento recuperado desde parámetro URL d:', doc.tipo, doc.numero);
+                        if (!doc.id) doc.id = shortId || ('doc_' + Date.now());
+                        if (shortId) localStorage.setItem('gestarian_short_' + shortId, doc.id);
+                        localStorage.setItem('gestarian_doc_' + doc.id, JSON.stringify(doc));
+                    }
+                } catch (e) {
+                    console.warn('[Visor] Error al decodificar d:', e);
+                }
+            }
+
+            // 2️⃣ Capa 2: Buscar en localStorage por shortId
+            if (!doc && shortId) {
+                const localDocId = localStorage.getItem('gestarian_short_' + shortId);
+                if (localDocId) {
+                    const localData = localStorage.getItem('gestarian_doc_' + localDocId);
+                    if (localData) {
+                        try { doc = JSON.parse(localData); } catch (e) { console.warn('[Visor] Error parse local doc:', e); }
+                    }
+                }
+            }
+
+            // 3️⃣ Capa 3: Buscar en localStorage por id directo
+            if (!doc && idDoc) {
+                const local = localStorage.getItem('gestarian_doc_' + idDoc);
+                if (local) {
+                    try { doc = JSON.parse(local); } catch(e) {}
+                }
+            }
+
+            // 4️⃣ Capa 4: Si no está en local ni URL, consultar Supabase
+            if (!doc && supabaseClient) {
+                try {
+                    const tabla = (shortId && shortId.startsWith('F-')) ? 'facturas' : 'presupuestos';
+                    let query = supabaseClient.from(tabla).select('*, clientes(*), vehiculos(*)');
+                    if (shortId) {
+                        query = query.eq('short_id', shortId);
+                    } else if (idDoc) {
+                        query = query.eq('id', idDoc);
+                    }
+                    const { data, error } = await query.maybeSingle();
+                    if (data && !error) {
+                        const cli = data.clientes || {};
+                        const veh = data.vehiculos || {};
+                        doc = {
+                            id: data.id,
+                            tipo: tabla === 'presupuestos' ? 'Presupuesto' : 'Factura',
+                            numero: data.numero || '',
+                            fecha: data.fecha || (data.created_at ? data.created_at.split('T')[0] : ''),
+                            cliente: {
+                                nombre: cli.nombre || '',
+                                dni: cli.dni || '',
+                                direccion: cli.direccion || '',
+                                poblacion: cli.poblacion || '',
+                                cp: cli.cp || '',
+                                telefono: cli.telefono || ''
+                            },
+                            vehiculo: {
+                                marca: veh.marca || '',
+                                modelo: veh.modelo || '',
+                                matricula: veh.matricula || '',
+                                km: veh.km || ''
+                            },
+                            conceptos: Array.isArray(data.conceptos) ? data.conceptos : [],
+                            base: data.base ? parseFloat(data.base).toFixed(2) : '',
+                            iva: data.iva ? parseFloat(data.iva).toFixed(2) : '',
+                            total: data.total ? parseFloat(data.total).toFixed(2) : '0.00',
+                            aplicaIva: data.aplica_iva !== undefined ? !!data.aplica_iva : true,
+                            observaciones: data.observaciones || ''
+                        };
+                    }
+                } catch (supaErr) {
+                    console.warn('[Visor] Supabase no disponible:', supaErr?.message || supaErr);
+                }
+            }
+
+            if (doc) {
+                activarVisorCliente(doc);
+            } else {
+                mostrarErrorVisor();
+            }
+        }
+
+        function mostrarErrorVisor() {
+            const app = document.getElementById('contenedor-app-paginas');
+            if (app) app.classList.remove('hidden');
+            const pres = document.getElementById('pagina-presupuestos');
+            if (pres) pres.style.display = 'none';
+            const fac = document.getElementById('pagina-facturas');
+            if (fac) fac.style.display = 'none';
+
+            let errDiv = document.getElementById('visor-error-screen');
+            if (!errDiv) {
+                errDiv = document.createElement('div');
+                errDiv.id = 'visor-error-screen';
+                errDiv.style.cssText = `
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    text-align: center;
+                    padding: 40px 20px;
+                    min-height: 60vh;
+                    color: #fff;
+                `;
+                errDiv.innerHTML = `
+                    <div style="font-size: 56px; margin-bottom: 20px;">📄</div>
+                    <h2 style="font-size: 22px; margin-bottom: 12px; color: #fff;">Documento no disponible</h2>
+                    <p style="color: #bbb; max-width: 440px; font-size: 15px; line-height: 1.5; margin-bottom: 25px;">
+                        No hemos podido cargar el presupuesto o factura. Es posible que el enlace no se haya copiado completo o haya caducado.
+                    </p>
+                    <a href="https://wa.me/34629052712?text=${encodeURIComponent('Hola DM CAR, no he podido abrir el documento desde el enlace recibido.')}" 
+                       target="_blank"
+                       style="display: inline-flex; align-items: center; gap: 10px; background: #25d366; color: #fff; padding: 12px 24px; border-radius: 30px; text-decoration: none; font-weight: bold; font-size: 15px; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0012.04 2zm0 18.06c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.12 8.12 0 01-1.24-4.29c0-4.51 3.67-8.18 8.18-8.18 2.19 0 4.24.85 5.79 2.4 1.55 1.55 2.4 3.6 2.4 5.78 0 4.52-3.67 8.15-8.14 8.15zm4.48-6.12c-.25-.12-1.47-.72-1.7-.81-.23-.08-.39-.12-.56.12-.17.25-.64.81-.79.97-.14.17-.29.19-.54.07-.25-.12-1.05-.39-2-1.23-.74-.66-1.24-1.47-1.39-1.72-.14-.25-.02-.38.11-.5.11-.11.25-.29.37-.43.12-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.4-.42-.56-.43h-.47c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1s.9 2.43 1.03 2.6c.12.17 1.77 2.7 4.29 3.79.6.26 1.07.41 1.43.53.6.19 1.15.16 1.58.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.14-1.18-.06-.12-.22-.19-.47-.31z"/></svg>
+                        Contactar con el Taller
+                    </a>
+                `;
+                const container = document.getElementById('scroll-paginas-container') || app;
+                container.appendChild(errDiv);
+            }
+        }
+
+        function activarVisorCliente(doc) {
+            document.body.classList.add('modo-documento', 'modo-visor-cliente');
+            const acceso = document.getElementById('vista-acceso');
+            if (acceso) acceso.classList.add('hidden');
+            const menu = document.getElementById('vista-menu');
+            if (menu) menu.classList.add('hidden');
+            const widgetTiempo = document.getElementById('widget-tiempo');
+            if (widgetTiempo) widgetTiempo.classList.add('hidden');
+            const app = document.getElementById('contenedor-app-paginas');
+            if (app) app.classList.remove('hidden');
+
+            const sufijo = doc.tipo === 'Presupuesto' ? '-pres' : '-fac';
+            const pageId = doc.tipo === 'Presupuesto' ? 'pagina-presupuestos' : 'pagina-facturas';
+            const otherPageId = doc.tipo === 'Presupuesto' ? 'pagina-facturas' : 'pagina-presupuestos';
+
+            const otherPage = document.getElementById(otherPageId);
+            if (otherPage) otherPage.style.display = 'none';
+
+            const targetPage = document.getElementById(pageId);
+            if (targetPage) targetPage.style.display = 'block';
+
+            // Insertar banner de visor superior con botón de descarga / impresión PDF
+            const contenedorPagina = document.getElementById(pageId);
+            if (contenedorPagina) {
+                const card = contenedorPagina.querySelector('.card');
+                if (card && !document.getElementById('banner-visor-' + sufijo)) {
+                    const banner = document.createElement('div');
+                    banner.id = 'banner-visor-' + sufijo;
+                    banner.className = 'banner-visor-cliente';
+                    banner.innerHTML = `
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <span style="font-size: 20px;">📄</span>
+                            <div>
+                                <strong style="color: #fff; font-size: 14px;">${doc.tipo.toUpperCase()} DIGITAL</strong>
+                                <div style="color: #bbb; font-size: 12px;">Consulta detallada y descarga oficial</div>
+                            </div>
+                        </div>
+                        <button class="banner-visor-btn-print" onclick="window.print()">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                            Descargar / Imprimir PDF
+                        </button>
+                    `;
+                    card.insertBefore(banner, card.firstChild);
+                }
+            }
+
+            // Cargar datos en los inputs del formulario
+            if (document.getElementById('doc-num' + sufijo)) document.getElementById('doc-num' + sufijo).value = doc.numero || '';
+            if (document.getElementById('doc-fecha' + sufijo)) document.getElementById('doc-fecha' + sufijo).value = doc.fecha || '';
+
+            if (document.getElementById('doc-cliente' + sufijo)) document.getElementById('doc-cliente' + sufijo).value = doc.cliente?.nombre || '';
+            if (document.getElementById('doc-dni' + sufijo)) document.getElementById('doc-dni' + sufijo).value = doc.cliente?.dni || '';
+            if (document.getElementById('doc-direccion' + sufijo)) document.getElementById('doc-direccion' + sufijo).value = doc.cliente?.direccion || '';
+            if (document.getElementById('doc-poblacion' + sufijo)) document.getElementById('doc-poblacion' + sufijo).value = doc.cliente?.poblacion || '';
+            if (document.getElementById('doc-cp' + sufijo)) document.getElementById('doc-cp' + sufijo).value = doc.cliente?.cp || '';
+            if (document.getElementById('doc-telefono' + sufijo)) document.getElementById('doc-telefono' + sufijo).value = doc.cliente?.telefono || '';
+
+            if (document.getElementById('doc-marca' + sufijo)) document.getElementById('doc-marca' + sufijo).value = doc.vehiculo?.marca || '';
+            if (document.getElementById('doc-modelo' + sufijo)) document.getElementById('doc-modelo' + sufijo).value = doc.vehiculo?.modelo || '';
+            if (document.getElementById('doc-matricula' + sufijo)) document.getElementById('doc-matricula' + sufijo).value = doc.vehiculo?.matricula || '';
+            if (document.getElementById('doc-km' + sufijo)) document.getElementById('doc-km' + sufijo).value = doc.vehiculo?.km || '';
+
+            // Cargar filas de conceptos limpiando filas vacías
+            if (contenedorPagina) {
+                const filas = contenedorPagina.querySelectorAll('.desglose-row');
+                filas.forEach((f, i) => {
+                    const c = (Array.isArray(doc.conceptos) && doc.conceptos[i]) ? doc.conceptos[i] : null;
+                    const cantInput = f.querySelector('.fila-cant');
+                    const descInput = f.querySelector('.fila-desc');
+                    const precioInput = f.querySelector('.fila-precio');
+                    const totalInput = f.querySelector('.fila-total');
+                    if (c) {
+                        if (cantInput) cantInput.value = c.cantidad || '';
+                        if (descInput) descInput.value = c.descripcion || c.concepto || '';
+                        if (precioInput) precioInput.value = (c.precio !== undefined && c.precio !== '') ? parseFloat(c.precio).toFixed(2) : '';
+                        if (totalInput) totalInput.value = (c.total !== undefined && c.total !== '') ? parseFloat(c.total).toFixed(2) : '';
+                    } else {
+                        if (cantInput) cantInput.value = '';
+                        if (descInput) descInput.value = '';
+                        if (precioInput) precioInput.value = '';
+                        if (totalInput) totalInput.value = '';
+                    }
+                });
+            }
+
+            if (document.getElementById('doc-obs' + sufijo)) {
+                document.getElementById('doc-obs' + sufijo).value = doc.observaciones || '';
+            }
+
+            if (doc.tipo === 'Presupuesto') {
+                const chk = document.getElementById('toggle-iva-pres');
+                if (chk) chk.checked = !!doc.aplicaIva;
+            }
+
+            // Calcular o rellenar totales
+            calcularFilas(doc.tipo);
+            if (doc.base && document.getElementById('doc-base' + sufijo)) {
+                document.getElementById('doc-base' + sufijo).value = parseFloat(doc.base).toFixed(2);
+            }
+            if (doc.iva && document.getElementById('doc-iva' + sufijo)) {
+                document.getElementById('doc-iva' + sufijo).value = parseFloat(doc.iva).toFixed(2);
+            }
+            if (doc.total && document.getElementById('doc-total' + sufijo)) {
+                document.getElementById('doc-total' + sufijo).value = parseFloat(doc.total).toFixed(2);
+            }
+
+            // Fijar todos los campos del documento a solo lectura
+            if (contenedorPagina) {
+                contenedorPagina.querySelectorAll('input, textarea').forEach(el => {
+                    el.readOnly = true;
+                });
+            }
+
+            const scrollContainer = document.getElementById('scroll-paginas-container');
+            if (scrollContainer) {
+                scrollContainer.scrollLeft = 0;
+            }
+        }
+
+        function imprimirDocumento(tipo) {
+            document.body.classList.remove('imprimiendo-presupuesto', 'imprimiendo-factura');
+            if (tipo === 'Presupuesto') {
+                document.body.classList.add('imprimiendo-presupuesto');
+            } else {
+                document.body.classList.add('imprimiendo-factura');
+            }
+            window.print();
+        }
+
+        // --- GESTIÓN DE CONFIGURACIÓN ---
+        function guardarConfiguracion() {
+            const nombre = document.getElementById('cfg-nombre').value.trim();
+            const cif = document.getElementById('cfg-cif').value.trim();
+            const domicilio = document.getElementById('cfg-domicilio').value.trim();
+            const telefono = document.getElementById('cfg-telefono').value.trim();
+            const email = document.getElementById('cfg-email').value.trim();
+
+            const alertaError = document.getElementById('cfg-alerta-error');
+            const alertaExito = document.getElementById('cfg-alerta-exito');
+            alertaError.classList.add('hidden');
+            alertaExito.classList.add('hidden');
+
+            if (!nombre || !cif || !domicilio || !telefono || !email) {
+                alertaError.innerText = '⚠️ Todos los campos son obligatorios. Por favor, rellena todos los datos.';
+                alertaError.classList.remove('hidden');
+                alertaError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+
+            if (!email.includes('@')) {
+                alertaError.innerText = '⚠️ El formato de correo electrónico no es válido.';
+                alertaError.classList.remove('hidden');
+                alertaError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+
+            const config = { nombre, cif, domicilio, telefono, email };
+            localStorage.setItem('gestarian_lite_config', JSON.stringify(config));
+            emailUsuario = email;
+
+            alertaExito.classList.remove('hidden');
+            alertaExito.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => {
+                alertaExito.classList.add('hidden');
+            }, 5000);
+        }
+
+        function cerrarSesionTaller() {
+            if (confirm("¿Deseas cerrar la sesión y volver a la pantalla de acceso?")) {
+                localStorage.removeItem('gestarian_lite_config');
+                document.body.classList.remove('modo-documento');
+                document.getElementById('contenedor-app-paginas').classList.add('hidden');
+                document.getElementById('widget-tiempo').classList.remove('hidden');
+                document.getElementById('vista-acceso').classList.remove('hidden');
+                document.getElementById('btn-volver-pantalla1').classList.add('hidden');
+                document.getElementById('btn-config-pantalla2').classList.add('hidden');
+                document.getElementById('user-email').value = '';
+            }
+        }
+
+        // --- CONTROL DE PANTALLA COMPLETA (FULLSCREEN) EN MÓVIL ---
+        let fullscreenCooldown = false;
+
+        function activarFullscreen() {
+            if (fullscreenCooldown) return;
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                const docEl = document.documentElement;
+                if (docEl.requestFullscreen) {
+                    docEl.requestFullscreen().catch(() => {});
+                } else if (docEl.webkitRequestFullscreen) {
+                    try { docEl.webkitRequestFullscreen(); } catch(e) {}
+                }
+            }
+        }
+
+        function salirFullscreen() {
+            fullscreenCooldown = true;
+            setTimeout(() => { fullscreenCooldown = false; }, 1200);
+
+            if (document.fullscreenElement || document.webkitFullscreenElement) {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen().catch(() => {});
+                } else if (document.webkitExitFullscreen) {
+                    try { document.webkitExitFullscreen(); } catch(e) {}
+                }
+            }
+        }
+
+        // Activar al tocar la pantalla en dispositivo móvil (excluyendo controles interactivos)
+        window.addEventListener('touchstart', function(e) {
+            if (e.target.closest('#btn-salir-fullscreen, button, input, textarea, select, a, .glass-btn, .btn-menu-big, .nav-tab, .action-btn')) return;
+            activarFullscreen();
+        }, { passive: true });
+
+        window.addEventListener('click', function(e) {
+            if (e.target.closest('#btn-salir-fullscreen, button, input, textarea, select, a, .glass-btn, .btn-menu-big, .nav-tab, .action-btn')) return;
+            if (window.innerWidth <= 768) {
+                activarFullscreen();
+            }
+        });
+
+        // Actualizar visibilidad del tirador al entrar/salir de fullscreen
+        function actualizarEstadoFullscreen() {
+            const isFS = !!(document.fullscreenElement || document.webkitFullscreenElement);
+            const btnSalir = document.getElementById('btn-salir-fullscreen');
+            if (btnSalir) {
+                if (isFS) {
+                    btnSalir.classList.remove('hidden');
+                } else {
+                    btnSalir.classList.add('hidden');
+                    btnSalir.style.transform = 'translate(-50%, 0)';
+                }
+            }
+        }
+        document.addEventListener('fullscreenchange', actualizarEstadoFullscreen);
+        document.addEventListener('webkitfullscreenchange', actualizarEstadoFullscreen);
+        document.addEventListener('mozfullscreenchange', actualizarEstadoFullscreen);
+        document.addEventListener('MSFullscreenChange', actualizarEstadoFullscreen);
+
+        // Lógica de arrastre hacia abajo del botón para salir de fullscreen
+        const btnSalirFS = document.getElementById('btn-salir-fullscreen');
+        if (btnSalirFS) {
+            let startY = 0;
+            let currentY = 0;
+            let isDragging = false;
+
+            const onDragStart = (clientY) => {
+                startY = clientY;
+                currentY = clientY;
+                isDragging = true;
+                btnSalirFS.style.transition = 'none';
+            };
+
+            const onDragMove = (clientY) => {
+                if (!isDragging) return;
+                currentY = clientY;
+                const deltaY = currentY - startY;
+                if (deltaY > 0) {
+                    // Arrastre hacia abajo visual
+                    btnSalirFS.style.transform = `translate(-50%, ${deltaY}px)`;
+                    if (deltaY > 60) {
+                        // Si se arrastra más de 60px, salir de fullscreen
+                        isDragging = false;
+                        btnSalirFS.style.transition = 'transform 0.2s ease';
+                        btnSalirFS.style.transform = 'translate(-50%, 0)';
+                        salirFullscreen();
+                    }
+                }
+            };
+
+            const onDragEnd = () => {
+                if (!isDragging) return;
+                isDragging = false;
+                btnSalirFS.style.transition = 'transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                const deltaY = currentY - startY;
+                if (deltaY > 30) {
+                    btnSalirFS.style.transform = 'translate(-50%, 0)';
+                    salirFullscreen();
+                } else {
+                    btnSalirFS.style.transform = 'translate(-50%, 0)';
+                }
+            };
+
+            // Soporte Pointer Events (Touch + Mouse moderno)
+            btnSalirFS.addEventListener('pointerdown', function(e) {
+                try { btnSalirFS.setPointerCapture(e.pointerId); } catch(err) {}
+                onDragStart(e.clientY);
+            });
+
+            btnSalirFS.addEventListener('pointermove', function(e) {
+                onDragMove(e.clientY);
+            });
+
+            btnSalirFS.addEventListener('pointerup', function(e) {
+                try { btnSalirFS.releasePointerCapture(e.pointerId); } catch(err) {}
+                onDragEnd();
+            });
+
+            btnSalirFS.addEventListener('pointercancel', function(e) {
+                try { btnSalirFS.releasePointerCapture(e.pointerId); } catch(err) {}
+                onDragEnd();
+            });
+
+            // Fallback Touch Events tradicionales
+            btnSalirFS.addEventListener('touchstart', function(e) {
+                if (e.touches.length === 1) onDragStart(e.touches[0].clientY);
+            }, { passive: true });
+
+            window.addEventListener('touchmove', function(e) {
+                if (isDragging && e.touches.length === 1) onDragMove(e.touches[0].clientY);
+            }, { passive: true });
+
+            window.addEventListener('touchend', function(e) {
+                onDragEnd();
+            });
+
+            // Permitir también salir con pulsación directa
+            btnSalirFS.addEventListener('click', function(e) {
+                e.stopPropagation();
+                salirFullscreen();
+            });
+        }
+    </script>
+</body>
+</html>
