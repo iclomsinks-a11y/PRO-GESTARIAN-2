@@ -61,7 +61,7 @@ export const DevSimulationBanner: React.FC = () => {
             <button
               onClick={() => {
                 startSimulation('USUARIO')
-                navigate('/')
+                navigate('/inicio')
               }}
               className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors"
             >
@@ -72,7 +72,7 @@ export const DevSimulationBanner: React.FC = () => {
             <button
               onClick={() => {
                 startSimulation('AUTORIZADO')
-                navigate('/')
+                navigate('/inicio')
               }}
               className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors"
             >

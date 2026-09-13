@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Settings, Save, ShieldCheck, Building, Wrench, RefreshCw, Smartphone, Terminal, Database, Activity, CheckCircle2, Image as ImageIcon } from 'lucide-react'
+import { Settings, Save, ShieldCheck, Building, Wrench, RefreshCw, Smartphone, Terminal, Database, Activity, CheckCircle2, Image as ImageIcon, Lock, Key, Eye, EyeOff } from 'lucide-react'
 import { useToast } from '../lib/ToastContext'
 import { useAuth } from '../hooks/useAuth'
 import { EgressAuditModal } from '../components/common/EgressAuditModal'
@@ -9,12 +9,19 @@ import { ImageUploadBox } from '../components/common/ImageUploadBox'
 import type { SectorType } from '../config/sectores'
 
 export const ConfiguracionPage: React.FC = () => {
-  const { esDev, perfil } = useAuth()
+  const { esDev, perfil, changeUserPassword } = useAuth()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [showAuditModal, setShowAuditModal] = useState(false)
   const [sector, setSector] = useState<SectorType>('automocion')
   const { addToast } = useToast()
+
+  // Estados para cambio de contraseña
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPass, setShowPass] = useState(false)
+  const [updatingPass, setUpdatingPass] = useState(false)
 
   const [config, setConfig] = useState({
     nombre_empresa: 'GESTARIAN DM CAR',
@@ -68,6 +75,35 @@ export const ConfiguracionPage: React.FC = () => {
     localStorage.removeItem('gestarian_configuracion')
     localStorage.removeItem('offline_clientes')
     addToast('Caché local limpiada correctamente', 'info')
+  }
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newPassword || newPassword.trim().length < 4) {
+      addToast('La nueva contraseña debe tener al menos 4 caracteres', 'error')
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      addToast('La confirmación de la contraseña no coincide', 'error')
+      return
+    }
+    setUpdatingPass(true)
+    try {
+      const emailTarget = perfil?.email || config.email || 'gestion@talleresdmcar.es'
+      const res = await changeUserPassword(emailTarget, currentPassword, newPassword)
+      if (res.success) {
+        addToast('Contraseña de acceso actualizada exitosamente', 'success')
+        setCurrentPassword('')
+        setNewPassword('')
+        setConfirmPassword('')
+      } else {
+        addToast(res.error || 'No se pudo actualizar la contraseña', 'error')
+      }
+    } catch {
+      addToast('Error al procesar la actualización de contraseña', 'error')
+    } finally {
+      setUpdatingPass(false)
+    }
   }
 
   return (
@@ -308,6 +344,99 @@ export const ConfiguracionPage: React.FC = () => {
           </button>
         </div>
       </form>
+
+      {/* SECCIÓN DE SEGURIDAD: CAMBIO DE CONTRASEÑA DE USUARIO REGISTRADO */}
+      <section className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-sm space-y-4 text-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+              <Lock className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm font-bold text-white">Contraseña de Acceso del Usuario</h2>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 text-[10px] font-bold border border-emerald-500/20">
+                  {perfil?.email || config.email}
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Modifica tu clave de acceso para iniciar sesión en este dispositivo y en el portal de clientes.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowPass(!showPass)}
+            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition-colors flex items-center gap-1.5 self-start sm:self-auto"
+          >
+            {showPass ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+            <span>{showPass ? 'Ocultar claves' : 'Mostrar claves'}</span>
+          </button>
+        </div>
+
+        <form onSubmit={handleChangePassword} className="space-y-4 pt-1">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-slate-400 mb-1 font-medium flex items-center gap-1">
+                <Key className="w-3 h-3 text-slate-500" />
+                <span>Contraseña Actual</span>
+              </label>
+              <input
+                type={showPass ? 'text' : 'password'}
+                required
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                placeholder="Contraseña actual"
+                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-slate-400 mb-1 font-medium flex items-center gap-1">
+                <Lock className="w-3 h-3 text-indigo-400" />
+                <span>Nueva Contraseña</span>
+              </label>
+              <input
+                type={showPass ? 'text' : 'password'}
+                required
+                minLength={4}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Mínimo 4 caracteres"
+                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-slate-400 mb-1 font-medium flex items-center gap-1">
+                <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                <span>Confirmar Nueva Contraseña</span>
+              </label>
+              <input
+                type={showPass ? 'text' : 'password'}
+                required
+                minLength={4}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Repite la nueva contraseña"
+                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-2">
+            <button
+              type="submit"
+              disabled={updatingPass}
+              className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-semibold text-xs shadow-md shadow-indigo-600/20 transition-all flex items-center gap-2 cursor-pointer"
+            >
+              <Key className="w-3.5 h-3.5" />
+              <span>{updatingPass ? 'Actualizando...' : 'Actualizar Contraseña de Acceso'}</span>
+            </button>
+          </div>
+        </form>
+      </section>
 
       {/* SECCIÓN EXCLUSIVA MODO DESARROLLADOR: VERIFICACIÓN TÉCNICA Y AUDITORÍA EGRESS */}
       {(esDev || perfil?.rol === 'DESARROLLADOR' || perfil?.esDeveloper) && (

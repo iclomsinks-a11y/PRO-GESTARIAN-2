@@ -24,12 +24,8 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
     if (location.pathname.startsWith('/dev')) {
       return <Navigate to="/dev-auth" state={{ from: location }} replace />
     }
-    // For client portal
-    if (location.pathname.startsWith('/cliente')) {
-      return <Navigate to="/portal?tab=cliente" state={{ from: location }} replace />
-    }
-    // General fallback to public access portal
-    return <Navigate to="/portal" state={{ from: location }} replace />
+    // For all other areas, redirect to Login Page
+    return <Navigate to="/login" state={{ from: location }} replace />
   }
 
   // Master Developer has universal bypass unless simulating
@@ -63,7 +59,7 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
             </div>
             <div className="pt-2">
               <Link
-                to="/"
+                to="/inicio"
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold shadow-md transition-colors"
               >
                 <ArrowLeft className="w-4 h-4" />
@@ -88,12 +84,12 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
             <p className="text-xs text-slate-400">
               Tu Jefe de Taller (Usuario) no ha habilitado el permiso <code className="text-amber-400">{requiredPermission}</code> para tu cuenta de empleado.
             </p>
-            <Link
-              to="/"
-              className="inline-block px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium transition-colors"
-            >
-              Regresar al Inicio
-            </Link>
+              <Link
+                to="/inicio"
+                className="inline-block px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium transition-colors"
+              >
+                Regresar al Inicio
+              </Link>
           </div>
         </div>
       )

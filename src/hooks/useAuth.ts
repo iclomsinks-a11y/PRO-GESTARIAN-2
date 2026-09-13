@@ -22,6 +22,9 @@ import {
   getStoredEmpleados,
   registerWorkshopRequest,
   switchDevelopmentRole,
+  changeUserPassword,
+  isDeviceRegistered,
+  clearDeviceRegistration,
   PerfilUsuario,
   RoleType,
   TipoLicencia
@@ -66,6 +69,9 @@ export function useAuth() {
     deleteWorkshopEmployee,
     getStoredSolicitudes,
     getStoredEmpleados,
-    registerWorkshopRequest
+    registerWorkshopRequest,
+    changeUserPassword,
+    isDeviceRegistered,
+    clearDeviceRegistration
   };
 }

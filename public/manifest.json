@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "GESTARIAN — DM CAR",
+  "name": "GESTARIAN Lite — DM CAR",
   "short_name": "GESTARIAN",
-  "description": "Sistema de Gestión y Control Integral para Talleres de Chapa y Pintura",
+  "description": "Sistema de Gestión y Presupuestación para Talleres de Chapa y Pintura",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -11,19 +11,19 @@
   "theme_color": "#0a0a0a",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "/public/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/public/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/apple-touch-icon.png",
+      "src": "/public/apple-touch-icon.png",
       "sizes": "180x180",
       "type": "image/png"
     }

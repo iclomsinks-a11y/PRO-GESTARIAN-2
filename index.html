@@ -4,8 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestarian Lite - DM CAR</title>
+    <meta name="theme-color" content="#0a0a0a">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="/public/manifest.json">
+    <link rel="apple-touch-icon" href="/public/apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="/public/favicon-32.png">
+    <!-- Open Graph Metadata para previsualización en WhatsApp -->
+    <meta property="og:title" content="&#8203;">
+    <meta property="og:description" content="&#8203;">
+    <meta property="og:image" content="https://lite-gestarian.web.app/public/images/logos/logo.jpg">
+    <meta property="og:url" content="https://lite-gestarian.web.app">
+    <meta property="og:type" content="website">
     <!-- Cliente Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root {
             --dm-black: #0d0d0d;
@@ -31,6 +45,19 @@
             padding: 20px;
             box-sizing: border-box;
             color: var(--dm-text-dark);
+            transition: min-height 0.3s ease, height 0.3s ease, padding 0.3s ease;
+        }
+        
+        .anio-portrait { display: inline; }
+        .anio-landscape { display: none; }
+        @media (orientation: landscape), (min-width: 1024px) {
+            .anio-portrait { display: none !important; }
+            .anio-landscape { display: inline !important; }
+        }
+        @media (min-width: 768px) and (max-width: 1023px) and (orientation: portrait) {
+            #widget-tiempo {
+                top: 8px !important;
+            }
         }
         @media (orientation: landscape), (min-width: 1024px) {
             body {
@@ -47,25 +74,40 @@
             }
             #bloque-reloj {
                 position: absolute !important;
-                top: 25px !important;
-                left: 50% !important;
-                transform: translateX(-50%) !important;
+                top: 20px !important;
+                left: 10px !important;
+                transform: scale(0.75) !important;
+                transform-origin: top left !important;
                 pointer-events: auto !important;
                 z-index: 15 !important;
+            }
+            #grupo-malaga-temp {
+                position: absolute !important;
+                top: 15px !important;
+                right: 15px !important;
+                transform: scale(0.75) !important;
+                transform-origin: top right !important;
+                pointer-events: auto !important;
+                z-index: 15 !important;
+                margin: 0 !important;
             }
             #bloque-clima {
                 position: absolute !important;
                 top: 17px !important;
                 left: 50% !important;
-                transform: translateX(-50%) !important;
+                transform: translateX(-50%) scale(0.8) !important;
+                transform-origin: top center !important;
                 width: auto !important;
                 margin-top: 0 !important;
                 display: flex !important;
-                gap: 40px !important;
+                gap: 25px !important;
                 justify-content: center !important;
-                align-items: flex-end !important;
+                align-items: center !important;
                 pointer-events: auto !important;
                 z-index: 15 !important;
+            }
+            .espaciador-balance {
+                display: none !important;
             }
             #vista-acceso {
                 min-height: 100vh !important;
@@ -106,13 +148,10 @@
                 width: auto !important;
                 text-align: right !important;
             }
-            #btn-config-pantalla2 {
-                top: 31px !important;
-                left: 10px !important;
-            }
+
             #btn-volver-pantalla1 {
                 top: 31px !important;
-                right: 10px !important;
+                right: 30px !important;
             }
         }
         .card { 
@@ -122,7 +161,6 @@
             width: 100%; 
             max-width: 800px; 
             overflow: hidden; 
-            border-bottom: 5px solid #666666; 
             margin: 0 auto 20px auto;
         }
         .menu-container {
@@ -207,7 +245,7 @@
             font-size: 18px;
             font-weight: 600;
             padding: 8px 15px;
-            margin-top: -70px; 
+            margin-top: -85px; 
             margin-bottom: 0px;
             color: #fff;
             background: rgba(0, 0, 0, 0.3);
@@ -236,67 +274,7 @@
             opacity: 0.95;
         }
 
-        /* --- BOTÓN CONFIGURACIÓN EN EL HEADER (A LA IZQUIERDA DE LA HORA, A 10PX DEL BORDE IZQUIERDO) --- */
-        #btn-config-pantalla2 {
-            position: fixed;
-            top: 31px;
-            left: 10px;
-            width: 38px;
-            height: 38px;
-            min-width: 38px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 0 15px var(--dm-red);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            transition: all 0.2s ease;
-            padding: 0;
-            z-index: 1000;
-            pointer-events: auto;
-        }
-        #btn-config-pantalla2:hover {
-            background: rgba(227, 0, 15, 0.35) !important;
-            border-color: #ffffff !important;
-            box-shadow: 0 0 25px var(--dm-red) !important;
-            transform: scale(1.08);
-        }
 
-        /* --- BOTÓN VOLVER EN EL HEADER (A LA DERECHA DE LA HORA, A 10PX DEL BORDE DERECHO) --- */
-        #btn-volver-pantalla1 {
-            position: fixed;
-            top: 31px;
-            right: 10px;
-            width: 38px;
-            height: 38px;
-            min-width: 38px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 0 15px var(--dm-red);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            transition: all 0.2s ease;
-            padding: 0;
-            z-index: 1000;
-            pointer-events: auto;
-        }
-        #btn-volver-pantalla1:hover {
-            background: rgba(227, 0, 15, 0.35) !important;
-            border-color: #ffffff !important;
-            box-shadow: 0 0 25px var(--dm-red) !important;
-            transform: scale(1.08);
-        }
 
         /* --- NAVEGACIÓN Y ESTRUCTURA DE PÁGINAS SCROLL --- */
         body.modo-documento {
@@ -316,50 +294,53 @@
             flex-direction: column;
             background: #ffffff;
         }
-        .nav-paginas-fija {
-            position: sticky;
-            top: 0;
-            left: 0;
-            width: 100%;
-            background: #1e1e1e;
-            display: flex;
-            align-items: center;
-            padding: 6px 10px;
-            box-sizing: border-box;
-            z-index: 1000;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            flex-shrink: 0;
+
+        /* Bloqueo total de scroll lateral y navegación táctil en modo visor de cliente */
+        body.modo-visor-cliente {
+            overflow-x: hidden !important;
+            overscroll-behavior-x: none !important;
+            touch-action: pan-y !important;
         }
-        .nav-tabs-wrapper {
-            display: flex;
-            flex: 1;
-            justify-content: space-around;
-            padding-right: 48px;
+        body.modo-visor-cliente #contenedor-app-paginas {
+            overflow-x: hidden !important;
+            width: 100% !important;
+            max-width: 100vw !important;
         }
-        .nav-tab {
-            flex: 1;
-            background: transparent;
-            border: none;
-            color: #aaaaaa;
-            font-size: 13px;
-            font-weight: 600;
-            padding: 8px 4px;
-            border-radius: 6px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-            transition: all 0.2s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-family: inherit;
+        body.modo-visor-cliente .scroll-paginas-container {
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+            display: block !important;
+            scroll-snap-type: none !important;
+            overscroll-behavior-x: none !important;
+            touch-action: pan-y !important;
+            height: 100vh !important;
+            width: 100% !important;
+            max-width: 100vw !important;
         }
-        .nav-tab.active {
-            background: #333333;
-            color: #ffffff;
-            border-bottom: 3px solid #e3000f;
+        body.modo-visor-cliente .pagina-item {
+            overflow-x: hidden !important;
+            overflow-y: visible !important;
+            display: block !important;
+            width: 100% !important;
+            max-width: 100vw !important;
+            height: auto !important;
+            min-height: 100vh !important;
+            touch-action: pan-y !important;
+            box-sizing: border-box !important;
         }
+        /* Ocultar páginas no activas en modo visor: más específico que la regla anterior */
+        body.modo-visor-cliente .pagina-item[data-visor-oculto="true"] {
+            display: none !important;
+            min-height: 0 !important;
+            height: 0 !important;
+            overflow: hidden !important;
+        }
+        body.modo-visor-cliente .nav-paginas-fija,
+        body.modo-visor-cliente .btn-volver-flotante,
+        body.modo-visor-cliente #btn-volver-pantalla1 {
+            display: none !important;
+        }
+
         .scroll-paginas-container {
             display: flex;
             flex-direction: row;
@@ -377,16 +358,15 @@
             width: 100%;
             max-width: 100%;
             height: 100%;
-            overflow-y: auto;
+            overflow-y: hidden;
             scroll-snap-align: start;
             scroll-snap-stop: always;
             box-sizing: border-box;
-            padding: 12px 10px 40px 10px;
+            padding: 2px 10px 40px 10px;
             background: #f7f7f7;
         }
         .pagina-item .card {
             box-shadow: 0 4px 18px rgba(0,0,0,0.08);
-            border-bottom: 5px solid #666666;
         }
 
         /* --- ESTILO DOCUMENTOS OFICIALES DM CAR (PRESUPUESTO Y FACTURA) --- */
@@ -512,7 +492,7 @@
         }
         .doc-meta-input {
             width: 85px;
-            height: 20px;
+            height: 16px;
             background-color: #e6e8eb !important;
             border: 1px solid #c4c7cc !important;
             border-radius: 2px;
@@ -553,14 +533,16 @@
 
         /* Inputs y Campos de Datos */
         .input-group { display: flex; gap: 5px; margin-bottom: 3px; }
-        .input-field { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .input-field { flex: 1; display: flex; flex-direction: row; align-items: center; min-width: 0; gap: 5px; }
         .input-field label {
-            font-size: 8px; font-weight: 800; margin-bottom: 1px;
+            font-size: 10px; font-weight: 800; margin-bottom: 0;
             color: #444444; text-transform: uppercase;
             line-height: 1; letter-spacing: 0.3px;
             display: inline-flex;
             align-items: center;
             gap: 3.5px;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
         .input-field label::before {
             content: '';
@@ -575,14 +557,32 @@
             background-color: #e6e8eb !important;
             border: 1px solid #c4c7cc !important;
             border-radius: 2px;
-            height: 22px;
+            height: 18px;
             padding: 2px 5px;
-            font-size: 10.5px;
+            font-size: 12.5px;
             color: #333333;
-            box-sizing: border-box;
             width: 100%;
+            flex: 1;
+            box-sizing: border-box;
         }
         .doc-input-box:focus {
+            background-color: #ffffff !important;
+            outline: 2px solid #808080;
+        }
+        .cfg-input {
+            background-color: #e6e8eb !important;
+            border: 1px solid #c4c7cc !important;
+            border-radius: 2px;
+            height: 22px;
+            padding: 2px 6px;
+            font-size: 12.5px;
+            color: #333333;
+            width: 100%;
+            flex: 1;
+            min-width: 0;
+            box-sizing: border-box;
+        }
+        .cfg-input:focus {
             background-color: #ffffff !important;
             outline: 2px solid #808080;
         }
@@ -594,9 +594,14 @@
             margin-bottom: 3px;
             flex-wrap: nowrap !important;
         }
-        .vehiculo-inline .input-field {
+        .vehiculo-inline .input-field,
+        .input-group-cliente .input-field {
             flex: 1;
             min-width: 0;
+            display: flex;
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 2px !important;
         }
 
         /* Tabla de Desglose de Trabajos */
@@ -609,19 +614,29 @@
             background-color: #808080;
             color: #ffffff;
             font-weight: 800;
-            font-size: 9.5px;
+            font-size: 11px;
             letter-spacing: 0.5px;
             text-align: center;
             height: 21px;
             align-items: center;
             border-radius: 2px 2px 0 0;
+            position: relative;
+            gap: 2px;
+            box-sizing: border-box;
         }
         .desglose-header-custom div {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center !important;
             padding: 0 4px;
-            border-right: 1px solid #a0a0a0;
+            box-sizing: border-box;
+            background-color: transparent !important;
+            color: #ffffff !important;
+            height: 100%;
         }
-        .desglose-header-custom div:last-child {
-            border-right: none;
+        .desglose-header-custom div:not(:last-child) {
+            border-right: 1px solid rgba(255, 255, 255, 0.25);
         }
         .desglose-row-custom {
             display: flex;
@@ -632,10 +647,11 @@
             background-color: #f1f3f5;
             border: 1px solid #c4c7cc;
             border-radius: 0;
-            height: 21px;
-            font-size: 10.5px;
+            height: 17px;
+            font-size: 13px;
             padding: 2px 4px;
             box-sizing: border-box;
+            color: #333333;
         }
         .desglose-row-custom input:focus {
             background-color: #ffffff;
@@ -644,7 +660,11 @@
         .col-c-cant { width: 12%; text-align: center; }
         .col-c-desc { flex: 1; text-align: left; }
         .col-c-precio { width: 18%; text-align: right; }
-        .col-c-total { width: 18%; text-align: right; background-color: #e6e8eb !important; font-weight: 700; }
+        .col-c-total { width: 18%; text-align: right; }
+        .desglose-row-custom input.col-c-total {
+            background-color: #e6e8eb !important;
+            font-weight: 700;
+        }
 
         /* Observaciones y Totales */
         .obs-totales-wrapper-custom {
@@ -683,7 +703,7 @@
         .obs-textarea-custom {
             width: 100%;
             height: 100%;
-            min-height: 56px;
+            min-height: 45px;
             background-color: #e6e8eb;
             border: 1px solid #c4c7cc;
             border-radius: 2px;
@@ -704,7 +724,7 @@
         .total-row-custom {
             display: flex;
             width: 100%;
-            height: 23px;
+            height: 18px;
             align-items: stretch;
         }
         .total-badge-custom {
@@ -782,7 +802,7 @@
             align-items: center;
             justify-content: space-between;
             gap: 10px;
-            margin-top: 14px;
+            margin-top: 1px;
             padding-top: 6px;
         }
         .btn-action-group {
@@ -871,22 +891,18 @@
         /* Toast de notificación elegante */
         .toast-notificacion {
             position: fixed;
-            bottom: 24px;
+            top: 50%;
             left: 50%;
-            transform: translateX(-50%) translateY(20px);
-            background: rgba(22, 22, 22, 0.95);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            color: #ffffff;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-left: 4px solid #25D366;
+            transform: translate(-50%, -50%);
+            background: #ffffff;
+            color: #0d0d0d;
+            border: 2px solid #25D366;
             padding: 12px 20px;
-            border-radius: 10px;
+            border-radius: 8px;
             font-size: 13px;
             font-weight: 600;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.7);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
             z-index: 999999;
-            transition: opacity 0.3s ease, transform 0.3s ease;
             max-width: 90vw;
             text-align: center;
             opacity: 0;
@@ -894,14 +910,12 @@
         }
         .toast-notificacion.visible {
             opacity: 1;
-            transform: translateX(-50%) translateY(0);
         }
 
         /* Estilos específicos para Modo Visor de Cliente */
         body.modo-visor-cliente #vista-acceso,
         body.modo-visor-cliente #vista-menu,
         body.modo-visor-cliente #btn-volver-pantalla1,
-        body.modo-visor-cliente #btn-config-pantalla2,
         body.modo-visor-cliente .nav-paginas-fija,
         body.modo-visor-cliente .btn-guia-scroll,
         body.modo-visor-cliente .btn-save,
@@ -909,6 +923,10 @@
         body.modo-visor-cliente #btn-salir-fullscreen,
         body.modo-visor-cliente .toggle-iva-wrapper {
             display: none !important;
+        }
+        body.modo-visor-cliente #scroll-paginas-container {
+            overflow-x: hidden !important;
+            touch-action: pan-y !important;
         }
         .banner-visor-cliente {
             background: #1e1e1e;
@@ -951,52 +969,66 @@
         .btn-main { background: #666666; color: var(--dm-text-light); }
         .btn-main:hover { background: #4f4f4f; }
 
-        /* Botón / Tirador deslizante para salir de Fullscreen */
-        #btn-salir-fullscreen {
-            position: fixed;
-            top: 8px;
-            left: 50%;
-            transform: translate(-50%, 0);
-            z-index: 100000;
-            cursor: pointer;
-            user-select: none;
-            touch-action: none;
-            transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.2s ease;
-        }
-        .salir-fs-pill {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            background: rgba(22, 22, 22, 0.9);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            color: #ffffff;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-top: 2px solid #e3000f;
-            border-radius: 20px;
-            padding: 6px 14px;
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.6), 0 0 10px rgba(227,0,15,0.3);
-        }
-        .salir-fs-pill svg {
-            stroke: #e3000f;
-            animation: bounceDownFS 1.5s infinite;
-        }
-        @keyframes bounceDownFS {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(3px); }
-        }
+
 
         .hidden { display: none !important; }
+        body.modo-documento #capa-oscura-header { display: none !important; }
 
         /* --- IMPRESIÓN AJUSTADA A 1 PÁGINA A4 (SIN DESBORDAMIENTOS) --- */
         @page {
             size: A4 portrait;
-            margin: 3mm 4mm 3mm 4mm;
+            margin: 6mm 4mm 6mm 4mm;
         }
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--dm-black);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: fadeOutSplash 0.5s ease-in-out 2s forwards;
+            pointer-events: none;
+        }
+        #splash-content {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            animation: zoomInSplash 2s ease-out forwards;
+        }
+        .splash-title {
+            color: #fffbc2;
+            text-shadow: 0 0 10px rgba(255, 251, 194, 0.8);
+            font-size: 35px;
+            font-weight: 200;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+            letter-spacing: 4px;
+            margin: 0;
+            padding: 0;
+            display: flex;
+        }
+        .splash-subtitle {
+            color: #c0c0c0;
+            font-size: 14px;
+            font-weight: 700;
+            font-family: 'Segoe UI', sans-serif;
+            margin-top: -6px;
+            margin-right: -2px;
+            letter-spacing: 0.5px;
+        }
+        @keyframes zoomInSplash {
+            0% { transform: scale(0.6); opacity: 0; }
+            20% { opacity: 1; }
+            100% { transform: scale(1.6); opacity: 1; }
+        }
+        @keyframes fadeOutSplash {
+            0% { opacity: 1; }
+            100% { opacity: 0; visibility: hidden; }
+        }
+
         @media print {
             html, body { 
                 background: #ffffff !important; 
@@ -1006,7 +1038,7 @@
                 height: 100% !important; 
                 overflow: hidden !important; 
             }
-            .nav-paginas-fija, #widget-tiempo, #vista-acceso, #vista-menu, #btn-volver-pantalla1, #btn-config-pantalla2, #btn-salir-fullscreen, #vista-privacidad, #modal-alerta-email, .btn-guia-scroll, .action-bar, .toggle-iva-wrapper { display: none !important; }
+            .nav-paginas-fija, #widget-tiempo, #vista-acceso, #vista-menu, #btn-volver-pantalla1, #btn-salir-fullscreen, #vista-privacidad, #modal-alerta-email, .btn-guia-scroll, .action-bar, .toggle-iva-wrapper, .action-bar-icons { display: none !important; }
             .scroll-paginas-container { height: auto !important; overflow: visible !important; display: block !important; }
             .pagina-item { 
                 display: block !important; 
@@ -1030,32 +1062,32 @@
                 page-break-after: avoid !important; 
                 break-after: avoid !important; 
             }
-            .cabecera-wrapper { padding: 2px 4px !important; border-bottom: 1px solid #ccc !important; }
+            .cabecera-wrapper { padding: 0 4px !important; border-bottom: 1px solid #ccc !important; }
             .doc-banner-header { 
-                max-height: 245px !important; 
+                max-height: 232px !important; 
                 width: 100% !important; 
                 height: auto !important; 
                 object-fit: contain !important;
                 display: block !important;
             }
-            .pie-wrapper { padding: 2px 0 0 0 !important; margin-top: 2px !important; border-top: 1px solid #ccc !important; }
+            .pie-wrapper { padding: 0 !important; margin-top: 2px !important; border-top: 1px solid #ccc !important; }
             .doc-banner-footer { 
-                max-height: 130px !important; 
+                max-height: 123px !important; 
                 width: 100% !important; 
                 height: auto !important; 
                 object-fit: contain !important;
                 display: block !important;
             }
-            .form-content { padding: 4px 8px !important; }
-            .doc-header-banner { margin: 4px 0 5px 0 !important; }
-            .doc-title-badge { height: 46px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .doc-title-badge span { font-size: 20px !important; padding: 0 16px 0 12px !important; }
+            .form-content { padding: 2px 6px !important; }
+            .doc-header-banner { margin: 2px 0 3px 0 !important; }
+            .doc-title-badge { height: 42px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .doc-title-badge span { font-size: 19px !important; padding: 0 14px 0 10px !important; }
             .red-slash-right { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .meta-row label { 
-                font-size: 10px !important; 
-                display: inline-flex !important;
-                align-items: center !important;
-                gap: 3.5px !important;
+                font-size: 9.5px !important; 
+                display: inline-flex !important; 
+                align-items: center !important; 
+                gap: 3px !important; 
             }
             .meta-row label::before {
                 content: '' !important;
@@ -1068,61 +1100,62 @@
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
-            .doc-meta-input { height: 29px !important; font-size: 11px !important; width: 85px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .section-banner { height: 29px !important; margin: 5px 0 4px 0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .doc-meta-input { height: 27px !important; font-size: 10.5px !important; width: 85px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .section-banner { height: 27px !important; margin: 3px 0 3px 0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .red-slash-left { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .section-banner span { font-size: 11.5px !important; }
-            .input-group { margin-bottom: 4px !important; gap: 6px !important; }
+            .section-banner span { font-size: 11px !important; }
+            .input-group { margin-bottom: 3px !important; gap: 5px !important; }
             .input-field label { 
-                font-size: 9.5px !important; 
-                margin-bottom: 2px !important; 
+                font-size: 11px !important; 
+                margin-bottom: 0 !important; 
                 line-height: 1 !important; 
                 color: #444 !important; 
-                display: inline-flex !important;
-                align-items: center !important;
-                gap: 4px !important;
+                display: inline-flex !important; 
+                align-items: center !important; 
+                gap: 3.5px !important; 
+                white-space: nowrap !important;
             }
             .input-field label::before {
                 content: '' !important;
                 display: inline-block !important;
                 width: 3.5px !important;
-                height: 10px !important;
+                height: 9px !important;
                 background: #e3000f !important;
                 border-radius: 1px !important;
                 flex-shrink: 0 !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
-            .doc-input-box { padding: 2px 6px !important; font-size: 11px !important; height: 32px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .vehiculo-inline { gap: 6px !important; margin-bottom: 4px !important; }
-            .desglose-header-custom { height: 31px !important; font-size: 11px !important; margin-top: 5px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .doc-input-box { padding: 1px 5px !important; font-size: 12.5px !important; height: 30px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .vehiculo-inline { gap: 5px !important; margin-bottom: 3px !important; }
+            .desglose-header-custom { height: 29px !important; font-size: 11px !important; margin-top: 4px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .desglose-row-custom { margin-top: 2px !important; gap: 2px !important; }
-            .desglose-row-custom input { height: 32px !important; font-size: 11px !important; padding: 2px 5px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .obs-totales-wrapper-custom { margin-top: 6px !important; gap: 10px !important; }
+            .desglose-row-custom input { height: 30px !important; font-size: 13px !important; padding: 1px 4px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .obs-totales-wrapper-custom { margin-top: 4px !important; gap: 8px !important; }
             .obs-label-custom {
                 display: inline-flex !important; 
                 align-items: center !important; 
-                gap: 4px !important;
+                gap: 3.5px !important; 
             }
             .obs-label-custom::before {
                 content: '' !important;
                 display: inline-block !important;
                 width: 3.5px !important;
-                height: 10px !important;
+                height: 9px !important;
                 background: #e3000f !important;
                 border-radius: 1px !important;
                 flex-shrink: 0 !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
-            .obs-textarea-custom { height: 100% !important; min-height: 90px !important; font-size: 11px !important; padding: 4px 6px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .totales-box-custom { width: 190px !important; gap: 2px !important; }
-            .total-row-custom { height: 36px !important; }
-            .total-badge-custom { font-size: 11px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .obs-textarea-custom { height: 100% !important; min-height: 80px !important; font-size: 10.5px !important; padding: 3px 5px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .totales-box-custom { width: 185px !important; gap: 2px !important; }
+            .total-row-custom { height: 33px !important; }
+            .total-badge-custom { font-size: 10.5px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .red-slash-mini { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .total-badge-custom.destacado { font-size: 12px !important; }
-            .total-input-custom { font-size: 11px !important; width: 85px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .total-input-custom.destacado { font-size: 13px !important; }
+            .total-badge-custom.destacado { font-size: 11.5px !important; }
+            .total-input-custom { font-size: 10.5px !important; width: 80px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .total-input-custom.destacado { font-size: 12.5px !important; }
 
             body.imprimiendo-presupuesto #pagina-facturas,
             body.imprimiendo-presupuesto #pagina-configuracion { display: none !important; }
@@ -1133,58 +1166,57 @@
     </style>
 </head>
 <body>
+    <div id="splash-screen">
+        <div id="splash-content">
+            <div class="splash-title">
+                <span>G</span><span>E</span><span>S</span><span>T</span><span>A</span><span>R</span><span>I</span><span>A</span><span>N</span>
+            </div>
+            <div class="splash-subtitle">Lite</div>
+        </div>
+    </div>
     <!-- TOAST DE NOTIFICACIONES -->
     <div id="toast-notificacion" class="toast-notificacion"></div>
 
-    <!-- TIRADOR / BOTÓN PARA SALIR DE FULLSCREEN (ARRASTRAR HACIA ABAJO O PULSAR) -->
-    <div id="btn-salir-fullscreen" class="hidden" title="Arrastra hacia abajo para salir de pantalla completa">
-        <div class="salir-fs-pill">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M19 9l-7 7-7-7"/>
-            </svg>
-            <span>Arrastra para salir</span>
-        </div>
-    </div>
 
-    <!-- BOTÓN CONFIGURACIÓN EN EL HEADER (A LA IZQUIERDA DE LA HORA, A 10PX DEL BORDE EXTERIOR) -->
-    <button id="btn-config-pantalla2" class="hidden" onclick="abrirFormulario('Configuracion')" title="Configuración">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3"></circle>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-        </svg>
-    </button>
 
-    <!-- BOTÓN VOLVER EN EL HEADER (A LA DERECHA DE LA HORA, A 10PX DEL BORDE EXTERIOR) -->
-    <button id="btn-volver-pantalla1" class="hidden" onclick="volverAcceso()" title="Volver al acceso">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M19 12H5M12 19l-7-7 7-7"/>
-        </svg>
-    </button>
+
 
     <!-- WIDGET SUPERIOR (RELOJ, FECHA, TEMPERATURA) -->
-    <div id="widget-tiempo" style="position: absolute; top: 25px; width: 100%; max-width: 900px; padding: 0 30px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; text-shadow: 0 2px 6px rgba(0,0,0,0.9); z-index: 10; pointer-events: none;">
-        <div id="bloque-reloj" style="display: flex; align-items: flex-start; justify-content: center; height: 50px;">
-            <span id="ampm" style="font-size: 14px; font-weight: bold; color: #fffbc2; font-family: 'Segoe UI', sans-serif; margin-right: 10px; margin-top: -5px;">AM</span>
-            <div id="svg-clock-container" style="display: flex; gap: 4px; align-items: center; height: 100%;"></div>
-        </div>
-        <div id="bloque-clima" style="display: flex; justify-content: space-between; align-items: flex-end; width: 100%; margin-top: 195px;">
-            <div id="fecha-widget" style="display: flex; flex-direction: column; align-items: center; text-align: center; color: #ddd; text-transform: uppercase; padding-bottom: 2px;">-</div>
-            <div style="display: flex; flex-direction: column; align-items: center; width: 128px;">
+    <div id="capa-oscura-header" style="position: absolute; top: 0; left: 0; width: 100%; height: 110px; background: linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.5) 80px, rgba(0,0,0,0) 100%); z-index: 5; pointer-events: none;"></div>
+    <div id="widget-tiempo" style="position: absolute; top: 5px; width: 100%; max-width: 900px; padding: 0 30px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; text-shadow: 0 2px 6px rgba(0,0,0,0.9); z-index: 10; pointer-events: none;">
+        <!-- ROW 1: RELOJ Y MALAGA -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; width: 100%; margin-top: -5px; position: relative;">
+            <div id="bloque-reloj" style="display: flex; align-items: flex-start; justify-content: flex-start; height: 50px; transform: scale(0.9); transform-origin: bottom left; margin-left: -20px; align-self: flex-start; margin-top: 5px;">
+                <span id="ampm" style="font-size: 14px; font-weight: bold; color: #fffbc2; font-family: 'Segoe UI', sans-serif; margin-right: 10px; margin-top: -5px;">AM</span>
+                <div id="svg-clock-container" style="display: flex; gap: 4px; align-items: center; height: 100%;"></div>
+            </div>
+            <div id="grupo-malaga-temp" style="display: flex; flex-direction: column; align-items: center; width: 128px; transform: scale(0.9); transform-origin: bottom right; margin-right: -25px; margin-bottom: 3px; pointer-events: auto;">
                 <div style="display: flex; justify-content: space-between; font-size: 15px; color: #999; font-weight: bold; width: 100%; line-height: 1; margin-bottom: 6px;">
                     <span>M</span><span>Á</span><span>L</span><span>A</span><span>G</span><span>A</span>
                 </div>
-                <div id="temp-widget" style="font-size: 34px; font-weight: bold; transition: color 0.3s ease; text-align: center; line-height: 0.85;">- °C</div>
+                <div id="temp-widget" style="font-size: 27px; font-weight: bold; transition: color 0.3s ease; text-align: center; line-height: 0.85;">- °C</div>
+            </div>
+        </div>
+        <!-- ROW 2: FECHA Y BOTÓN DE APAGADO EN LA MISMA LÍNEA -->
+        <div id="bloque-clima" style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 3px; pointer-events: auto; padding: 0 4px; box-sizing: border-box;">
+            <div class="espaciador-balance" style="width: 36px; height: 1px; flex-shrink: 0;"></div>
+            <div id="fecha-widget" style="flex: 1; display: flex; flex-direction: row; justify-content: center; text-align: center; color: #ddd; text-transform: uppercase; padding: 0 4px; transform: scale(0.85); transform-origin: center;">-</div>
+            <div id="btn-power-off" onclick="animacionApagar()" style="width: 36px; height: 36px; cursor: pointer; color: #ffffff; filter: drop-shadow(0 0 6px #00e5ff) drop-shadow(0 0 14px rgba(0,229,255,0.8)); display: flex; justify-content: center; align-items: center; opacity: 0.95; transition: opacity 0.3s ease, filter 0.3s ease; flex-shrink: 0;" onmouseover="this.style.opacity='1'; this.style.filter='drop-shadow(0 0 10px #00e5ff) drop-shadow(0 0 22px rgba(0,229,255,1))'" onmouseout="this.style.opacity='0.95'; this.style.filter='drop-shadow(0 0 6px #00e5ff) drop-shadow(0 0 14px rgba(0,229,255,0.8))'" title="Apagar / Salir">
+                <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+                    <line x1="12" y1="2" x2="12" y2="12"></line>
+                </svg>
             </div>
         </div>
     </div>
 
     <!-- PANTALLA 1: ACCESO MEDIANTE EMAIL -->
     <div id="vista-acceso" class="menu-container" style="position: relative; z-index: 25;">
-        <input type="email" id="user-email" class="glass-input" placeholder="Añade tu email para acceder" onkeydown="if(event.key==='Enter') accederHerramienta()">
+        <input type="email" id="user-email" class="glass-input" placeholder="Añade tu email para acceder" onclick="activarFullscreen()" ontouchstart="activarFullscreen()" onkeydown="if(event.key==='Enter') accederHerramienta()">
         
         <button class="glass-btn" onclick="accederHerramienta()">Acceder</button>
         
-        <div id="brand-gestarian" style="position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 300px; display: flex; flex-direction: column; align-items: center; user-select: none; pointer-events: none;">
+        <div id="brand-gestarian" style="position: absolute; bottom: -3px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 300px; display: flex; flex-direction: column; align-items: center; user-select: none; pointer-events: none;">
             <div style="width: 100%; display: flex; justify-content: space-between; color: #fffbc2; text-shadow: 0 0 8px rgba(255, 251, 194, 0.6); font-size: 13px; font-weight: 200; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;">
                 <span>G</span><span>E</span><span>S</span><span>T</span><span>A</span><span>R</span><span>I</span><span>A</span><span>N</span>
             </div>
@@ -1202,7 +1234,7 @@
     <div id="vista-menu" class="menu-container hidden">
         <button class="btn-menu-big" onclick="abrirFormulario('Presupuesto')">Presupuestos</button>
         <button class="btn-menu-big" onclick="abrirFormulario('Factura')">Facturas</button>
-        <div style="width: 90%; max-width: 300px; display: flex; flex-direction: column; align-items: center; user-select: none; pointer-events: none; margin-top: -6px;">
+        <div style="width: 90%; max-width: 300px; display: flex; flex-direction: column; align-items: center; user-select: none; pointer-events: none; margin-top: 12px;">
             <div style="width: 100%; display: flex; justify-content: space-between; color: #fffbc2; text-shadow: 0 0 8px rgba(255, 251, 194, 0.6); font-size: 13px; font-weight: 200; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;">
                 <span>G</span><span>E</span><span>S</span><span>T</span><span>A</span><span>R</span><span>I</span><span>A</span><span>N</span>
             </div>
@@ -1232,26 +1264,7 @@
 
     <!-- CONTENEDOR DE LA APLICACIÓN CON NAVEGACIÓN SCROLL ENTRE PÁGINAS -->
     <div id="contenedor-app-paginas" class="hidden">
-        <!-- BARRA FIJA SUPERIOR DE TABS -->
-        <div class="nav-paginas-fija">
-            <div class="nav-tabs-wrapper">
-                <button class="nav-tab active" onclick="irAPagina(0)" id="tab-btn-0">
-                    <span>📄</span> Presupuestos
-                </button>
-                <button class="nav-tab" onclick="irAPagina(1)" id="tab-btn-1">
-                    <span>🧾</span> Facturas
-                </button>
-                <button class="nav-tab" onclick="irAPagina(2)" id="tab-btn-2">
-                    <span>⚙️</span> Configuración
-                </button>
-            </div>
-            <!-- Botón volver al menú a 10px del borde derecho -->
-            <button id="btn-volver-nav" onclick="volverAlMenu()" title="Volver al menú" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); width: 34px; height: 34px; min-width: 34px; border-radius: 50%; background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.45); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 0 10px var(--dm-red); transition: all 0.2s ease; padding: 0;">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M19 12H5M12 19l-7-7 7-7"/>
-                </svg>
-            </button>
-        </div>
+
 
         <!-- CONTENEDOR SCROLL HORIZONTAL (DESLIZAR / SWIPE) -->
         <div class="scroll-paginas-container" id="scroll-paginas-container">
@@ -1293,17 +1306,15 @@
                             <div class="red-slash-left"></div>
                             <span>DATOS DEL CLIENTE</span>
                         </div>
-                        <div class="input-group">
-                            <div class="input-field" style="flex: 3;"><label>NOMBRE / RAZÓN SOCIAL</label><input type="text" id="doc-cliente-pres" class="doc-input-box" placeholder="Nombre completo"></div>
+                        <div class="input-group input-group-cliente">
+                            <div class="input-field" style="flex: 2.2;"><label>NOMBRE / RAZÓN SOCIAL</label><input type="text" id="doc-cliente-pres" class="doc-input-box" placeholder="Nombre completo"></div>
                             <div class="input-field" style="flex: 1;"><label>DNI / CIF</label><input type="text" id="doc-dni-pres" class="doc-input-box" placeholder="DNI / CIF"></div>
+                            <div class="input-field" style="flex: 1.2;"><label>TELÉFONO</label><input type="tel" id="doc-telefono-pres" class="doc-input-box" placeholder="Teléfono"></div>
                         </div>
-                        <div class="input-group">
-                            <div class="input-field" style="flex: 1;"><label>DIRECCIÓN</label><input type="text" id="doc-direccion-pres" class="doc-input-box" placeholder="Dirección completa"></div>
-                        </div>
-                        <div class="input-group">
-                            <div class="input-field" style="flex: 2.2;"><label>POBLACIÓN</label><input type="text" id="doc-poblacion-pres" class="doc-input-box" placeholder="Población"></div>
-                            <div class="input-field" style="flex: 1;"><label>C.P.</label><input type="text" id="doc-cp-pres" class="doc-input-box" placeholder="C.P."></div>
-                            <div class="input-field" style="flex: 1.8;"><label>TELÉFONO</label><input type="tel" id="doc-telefono-pres" class="doc-input-box" placeholder="Teléfono"></div>
+                        <div class="input-group input-group-cliente">
+                            <div class="input-field" style="flex: 2;"><label>DIRECCIÓN</label><input type="text" id="doc-direccion-pres" class="doc-input-box" placeholder="Dirección completa"></div>
+                            <div class="input-field" style="flex: 0.8;"><label>C.P.</label><input type="text" id="doc-cp-pres" class="doc-input-box" placeholder="C.P."></div>
+                            <div class="input-field" style="flex: 1.5;"><label>POBLACIÓN</label><input type="text" id="doc-poblacion-pres" class="doc-input-box" placeholder="Población"></div>
                         </div>
 
                         <!-- DATOS DEL VEHÍCULO (1 Fila: Marca, Modelo, Matrícula, Kilómetros) -->
@@ -1315,20 +1326,38 @@
                             <div class="input-field"><label>MARCA</label><input type="text" id="doc-marca-pres" class="doc-input-box" placeholder="Marca"></div>
                             <div class="input-field"><label>MODELO</label><input type="text" id="doc-modelo-pres" class="doc-input-box" placeholder="Modelo"></div>
                             <div class="input-field"><label>MATRÍCULA</label><input type="text" id="doc-matricula-pres" class="doc-input-box" placeholder="Matrícula"></div>
-                            <div class="input-field"><label>KILÓMETROS</label><input type="text" id="doc-km-pres" class="doc-input-box" placeholder="Km"></div>
+                            <div class="input-field"><label>Km</label><input type="text" id="doc-km-pres" class="doc-input-box" placeholder="Km"></div>
                         </div>
 
-                        <!-- TABLA DE DESGLOSE DE TRABAJOS (5 FILAS) -->
+                        <!-- TABLA DE DESGLOSE DE TRABAJOS (8 FILAS) -->
                         <div class="tabla-desglose">
                             <div class="desglose-header-custom">
-                                <div class="col-c-cant">CANT.</div>
-                                <div class="col-c-desc">DESCRIPCIÓN DE LOS TRABAJOS</div>
-                                <div class="col-c-precio">PRECIO UNITARIO</div>
-                                <div class="col-c-total">TOTAL</div>
+                                <div class="col-c-cant">Ud.</div>
+                                <div class="col-c-desc">CONCEPTO</div>
+                                <div class="col-c-precio">PRECIO</div>
+                                <div class="col-c-total">IMPORTE</div>
                             </div>
                             <div class="desglose-row-custom desglose-row">
                                 <input type="number" class="col-c-cant fila-cant" value="1" oninput="calcularFilas('Presupuesto')">
                                 <input type="text" class="col-c-desc fila-desc" id="doc-concepto-pres" placeholder="Descripción principal">
+                                <input type="number" class="col-c-precio fila-precio" oninput="calcularFilas('Presupuesto')">
+                                <input type="number" class="col-c-total fila-total" readonly>
+                            </div>
+                            <div class="desglose-row-custom desglose-row">
+                                <input type="number" class="col-c-cant fila-cant" oninput="calcularFilas('Presupuesto')">
+                                <input type="text" class="col-c-desc fila-desc">
+                                <input type="number" class="col-c-precio fila-precio" oninput="calcularFilas('Presupuesto')">
+                                <input type="number" class="col-c-total fila-total" readonly>
+                            </div>
+                            <div class="desglose-row-custom desglose-row">
+                                <input type="number" class="col-c-cant fila-cant" oninput="calcularFilas('Presupuesto')">
+                                <input type="text" class="col-c-desc fila-desc">
+                                <input type="number" class="col-c-precio fila-precio" oninput="calcularFilas('Presupuesto')">
+                                <input type="number" class="col-c-total fila-total" readonly>
+                            </div>
+                            <div class="desglose-row-custom desglose-row">
+                                <input type="number" class="col-c-cant fila-cant" oninput="calcularFilas('Presupuesto')">
+                                <input type="text" class="col-c-desc fila-desc">
                                 <input type="number" class="col-c-precio fila-precio" oninput="calcularFilas('Presupuesto')">
                                 <input type="number" class="col-c-total fila-total" readonly>
                             </div>
@@ -1397,30 +1426,36 @@
                         </div>
 
                         <!-- Pié Corporativo DM CAR -->
-                        <div class="pie-wrapper">
-                            <img src="/public/images/pie_dmcar.png" alt="DM CAR - Tu vehículo en buenas manos" class="doc-banner-footer">
-                            <div class="doc-pie-text-red">Tu vehículo, en buenas manos &bull; Gracias por tu confianza</div>
-                        </div>
 
-                        <!-- Barra de Acciones: Guardar, Imprimir y Gran Botón WhatsApp -->
-                        <div class="action-bar">
-                            <div class="btn-action-group">
-                                <button class="btn-save" onclick="guardarDocumento('Presupuesto')">Guardar</button>
-                                <button class="btn-print" onclick="imprimirDocumento('Presupuesto')">Imprimir</button>
-                            </div>
-                            <button class="btn-whatsapp-grande no-guardado" id="btn-wa-pres" onclick="enviarWhatsApp('Presupuesto')" title="Guarda primero el documento para enviar por WhatsApp" aria-label="Enviar por WhatsApp" disabled>
-                                <svg viewBox="0 0 24 24" class="wa-svg-icon" fill="currentColor">
-                                    <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0012.04 2zm0 18.06c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.12 8.12 0 01-1.24-4.29c0-4.51 3.67-8.18 8.18-8.18 2.19 0 4.24.85 5.79 2.4 1.55 1.55 2.4 3.6 2.4 5.78 0 4.52-3.67 8.15-8.14 8.15zm4.48-6.12c-.25-.12-1.47-.72-1.7-.81-.23-.08-.39-.12-.56.12-.17.25-.64.81-.79.97-.14.17-.29.19-.54.07-.25-.12-1.05-.39-2-1.23-.74-.66-1.24-1.47-1.39-1.72-.14-.25-.02-.38.11-.5.11-.11.25-.29.37-.43.12-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.4-.42-.56-.43h-.47c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1s.9 2.43 1.03 2.6c.12.17 1.77 2.7 4.29 3.79.6.26 1.07.41 1.43.53.6.19 1.15.16 1.58.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.14-1.18-.06-.12-.22-.19-.47-.31z"/>
+
+                        <style>
+                            .btn-action-icon { background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; }
+                            .btn-action-icon.no-guardado { color: #808080 !important; }
+                            .btn-action-icon.color-naranja:not(.no-guardado) { color: #fd7e14; }
+                            .btn-action-icon.color-verde:not(.no-guardado) { color: #28a745; }
+                            .btn-action-icon.color-azul { color: #007bff; }
+                            .btn-action-icon.guardado { color: #25D366; animation: pulse-wa 1.5s 2; }
+                            @keyframes respiracionSave {
+                                0%, 100% { transform: scale(1); filter: drop-shadow(0 0 2px rgba(0, 123, 255, 0.3)); opacity: 0.85; }
+                                50% { transform: scale(1.15); filter: drop-shadow(0 0 10px rgba(0, 123, 255, 0.85)); opacity: 1; }
+                            }
+                            .btn-action-icon.respiracion-guardar { animation: respiracionSave 2s infinite ease-in-out; }
+                        </style>
+                        <div class="action-bar-icons" style="display: flex; justify-content: space-evenly; align-items: center; width: 100%; margin-top: 14px; padding-bottom: 11px; box-sizing: border-box;">
+                            <button id="btn-guardar-pres" onclick="guardarDocumento('Presupuesto')" class="btn-action-icon color-azul respiracion-guardar" title="Guardar">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 47px; height: 47px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                            </button>
+                            <button id="btn-imprimir-pres" onclick="imprimirDocumento('Presupuesto')" class="btn-action-icon color-naranja no-guardado" title="Guarde primero">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 47px; height: 47px;"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                            </button>
+                            <button id="btn-wa-pres" class="btn-action-icon color-verde no-guardado" onclick="enviarWhatsApp('Presupuesto')" title="Guarde primero">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 55px; height: 55px;">
+                                    <path d="M3 21l1.65 -3.8a9 9 0 1 1 3.4 2.9l-5.05 .9"></path>
+                                    <path d="M9 10a.5 .5 0 0 0 1 0v-1a.5 .5 0 0 0 -1 0v1a5 5 0 0 0 5 5h1a.5 .5 0 0 0 0 -1h-1a.5 .5 0 0 0 0 1"></path>
                                 </svg>
                             </button>
                         </div>
 
-                        <!-- Indicador visual de desplazamiento hacia Facturas -->
-                        <div class="btn-guia-scroll" style="text-align: center; margin-top: 20px;">
-                            <button onclick="irAPagina(1)" style="background: transparent; border: 1px dashed #aaa; color: #666; padding: 6px 16px; border-radius: 20px; font-size: 12px; cursor: pointer;">
-                                Desliza o pulsa aquí para ir a <strong>Facturas ➔</strong>
-                            </button>
-                        </div>
                     </div>
                 </div>
             </section>
@@ -1462,17 +1497,15 @@
                             <div class="red-slash-left"></div>
                             <span>DATOS DEL CLIENTE</span>
                         </div>
-                        <div class="input-group">
-                            <div class="input-field" style="flex: 3;"><label>NOMBRE / RAZÓN SOCIAL</label><input type="text" id="doc-cliente-fac" class="doc-input-box" placeholder="Nombre completo"></div>
+                        <div class="input-group input-group-cliente">
+                            <div class="input-field" style="flex: 2.2;"><label>NOMBRE / RAZÓN SOCIAL</label><input type="text" id="doc-cliente-fac" class="doc-input-box" placeholder="Nombre completo"></div>
                             <div class="input-field" style="flex: 1;"><label>DNI / CIF</label><input type="text" id="doc-dni-fac" class="doc-input-box" placeholder="DNI / CIF"></div>
+                            <div class="input-field" style="flex: 1.2;"><label>TELÉFONO</label><input type="tel" id="doc-telefono-fac" class="doc-input-box" placeholder="Teléfono"></div>
                         </div>
-                        <div class="input-group">
-                            <div class="input-field" style="flex: 1;"><label>DIRECCIÓN</label><input type="text" id="doc-direccion-fac" class="doc-input-box" placeholder="Dirección completa"></div>
-                        </div>
-                        <div class="input-group">
-                            <div class="input-field" style="flex: 2.2;"><label>POBLACIÓN</label><input type="text" id="doc-poblacion-fac" class="doc-input-box" placeholder="Población"></div>
-                            <div class="input-field" style="flex: 1;"><label>C.P.</label><input type="text" id="doc-cp-fac" class="doc-input-box" placeholder="C.P."></div>
-                            <div class="input-field" style="flex: 1.8;"><label>TELÉFONO</label><input type="tel" id="doc-telefono-fac" class="doc-input-box" placeholder="Teléfono"></div>
+                        <div class="input-group input-group-cliente">
+                            <div class="input-field" style="flex: 2;"><label>DIRECCIÓN</label><input type="text" id="doc-direccion-fac" class="doc-input-box" placeholder="Dirección completa"></div>
+                            <div class="input-field" style="flex: 0.8;"><label>C.P.</label><input type="text" id="doc-cp-fac" class="doc-input-box" placeholder="C.P."></div>
+                            <div class="input-field" style="flex: 1.5;"><label>POBLACIÓN</label><input type="text" id="doc-poblacion-fac" class="doc-input-box" placeholder="Población"></div>
                         </div>
 
                         <!-- DATOS DEL VEHÍCULO (1 Fila: Marca, Modelo, Matrícula, Kilómetros) -->
@@ -1484,20 +1517,38 @@
                             <div class="input-field"><label>MARCA</label><input type="text" id="doc-marca-fac" class="doc-input-box" placeholder="Marca"></div>
                             <div class="input-field"><label>MODELO</label><input type="text" id="doc-modelo-fac" class="doc-input-box" placeholder="Modelo"></div>
                             <div class="input-field"><label>MATRÍCULA</label><input type="text" id="doc-matricula-fac" class="doc-input-box" placeholder="Matrícula"></div>
-                            <div class="input-field"><label>KILÓMETROS</label><input type="text" id="doc-km-fac" class="doc-input-box" placeholder="Km"></div>
+                            <div class="input-field"><label>Km</label><input type="text" id="doc-km-fac" class="doc-input-box" placeholder="Km"></div>
                         </div>
 
-                        <!-- TABLA DE DESGLOSE DE TRABAJOS (5 FILAS) -->
+                        <!-- TABLA DE DESGLOSE DE TRABAJOS (8 FILAS) -->
                         <div class="tabla-desglose">
                             <div class="desglose-header-custom">
-                                <div class="col-c-cant">CANT.</div>
-                                <div class="col-c-desc">DESCRIPCIÓN</div>
-                                <div class="col-c-precio">PRECIO UNITARIO</div>
-                                <div class="col-c-total">TOTAL</div>
+                                <div class="col-c-cant">Ud.</div>
+                                <div class="col-c-desc">CONCEPTO</div>
+                                <div class="col-c-precio">PRECIO</div>
+                                <div class="col-c-total">IMPORTE</div>
                             </div>
                             <div class="desglose-row-custom desglose-row">
                                 <input type="number" class="col-c-cant fila-cant" value="1" oninput="calcularFilas('Factura')">
                                 <input type="text" class="col-c-desc fila-desc" id="doc-concepto-fac" placeholder="Descripción principal">
+                                <input type="number" class="col-c-precio fila-precio" oninput="calcularFilas('Factura')">
+                                <input type="number" class="col-c-total fila-total" readonly>
+                            </div>
+                            <div class="desglose-row-custom desglose-row">
+                                <input type="number" class="col-c-cant fila-cant" oninput="calcularFilas('Factura')">
+                                <input type="text" class="col-c-desc fila-desc">
+                                <input type="number" class="col-c-precio fila-precio" oninput="calcularFilas('Factura')">
+                                <input type="number" class="col-c-total fila-total" readonly>
+                            </div>
+                            <div class="desglose-row-custom desglose-row">
+                                <input type="number" class="col-c-cant fila-cant" oninput="calcularFilas('Factura')">
+                                <input type="text" class="col-c-desc fila-desc">
+                                <input type="number" class="col-c-precio fila-precio" oninput="calcularFilas('Factura')">
+                                <input type="number" class="col-c-total fila-total" readonly>
+                            </div>
+                            <div class="desglose-row-custom desglose-row">
+                                <input type="number" class="col-c-cant fila-cant" oninput="calcularFilas('Factura')">
+                                <input type="text" class="col-c-desc fila-desc">
                                 <input type="number" class="col-c-precio fila-precio" oninput="calcularFilas('Factura')">
                                 <input type="number" class="col-c-total fila-total" readonly>
                             </div>
@@ -1558,32 +1609,20 @@
                             </div>
                         </div>
 
-                        <!-- Pié Corporativo DM CAR -->
-                        <div class="pie-wrapper">
-                            <img src="/public/images/pie_dmcar.png" alt="DM CAR - Tu vehículo en buenas manos" class="doc-banner-footer">
-                            <div class="doc-pie-text-red">Tu vehículo, en buenas manos &bull; Gracias por tu confianza</div>
-                        </div>
 
-                        <!-- Barra de Acciones: Guardar, Imprimir y Gran Botón WhatsApp -->
-                        <div class="action-bar">
-                            <div class="btn-action-group">
-                                <button class="btn-save" onclick="guardarDocumento('Factura')">Guardar</button>
-                                <button class="btn-print" onclick="imprimirDocumento('Factura')">Imprimir</button>
-                            </div>
-                            <button class="btn-whatsapp-grande no-guardado" id="btn-wa-fac" onclick="enviarWhatsApp('Factura')" title="Guarda primero el documento para enviar por WhatsApp" aria-label="Enviar por WhatsApp" disabled>
-                                <svg viewBox="0 0 24 24" class="wa-svg-icon" fill="currentColor">
-                                    <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0012.04 2zm0 18.06c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.12 8.12 0 01-1.24-4.29c0-4.51 3.67-8.18 8.18-8.18 2.19 0 4.24.85 5.79 2.4 1.55 1.55 2.4 3.6 2.4 5.78 0 4.52-3.67 8.15-8.14 8.15zm4.48-6.12c-.25-.12-1.47-.72-1.7-.81-.23-.08-.39-.12-.56.12-.17.25-.64.81-.79.97-.14.17-.29.19-.54.07-.25-.12-1.05-.39-2-1.23-.74-.66-1.24-1.47-1.39-1.72-.14-.25-.02-.38.11-.5.11-.11.25-.29.37-.43.12-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.4-.42-.56-.43h-.47c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1s.9 2.43 1.03 2.6c.12.17 1.77 2.7 4.29 3.79.6.26 1.07.41 1.43.53.6.19 1.15.16 1.58.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.14-1.18-.06-.12-.22-.19-.47-.31z"/>
+
+                        <div class="action-bar-icons" style="display: flex; justify-content: space-evenly; align-items: center; width: 100%; margin-top: 14px; padding-bottom: 11px; box-sizing: border-box;">
+                            <button id="btn-guardar-fac" onclick="guardarDocumento('Factura')" class="btn-action-icon color-azul respiracion-guardar" title="Guardar">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 47px; height: 47px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                            </button>
+                            <button id="btn-imprimir-fac" onclick="imprimirDocumento('Factura')" class="btn-action-icon color-naranja no-guardado" title="Guarde primero">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 47px; height: 47px;"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                            </button>
+                            <button id="btn-wa-fac" class="btn-action-icon color-verde no-guardado" onclick="enviarWhatsApp('Factura')" title="Guarda primero">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 55px; height: 55px;">
+                                    <path d="M3 21l1.65 -3.8a9 9 0 1 1 3.4 2.9l-5.05 .9"></path>
+                                    <path d="M9 10a.5 .5 0 0 0 1 0v-1a.5 .5 0 0 0 -1 0v1a5 5 0 0 0 5 5h1a.5 .5 0 0 0 0 -1h-1a.5 .5 0 0 0 0 1"></path>
                                 </svg>
-                            </button>
-                        </div>
-
-                        <!-- Indicadores de navegación -->
-                        <div class="btn-guia-scroll" style="display: flex; justify-content: space-between; margin-top: 20px;">
-                            <button onclick="irAPagina(0)" style="background: transparent; border: 1px dashed #aaa; color: #666; padding: 6px 14px; border-radius: 20px; font-size: 12px; cursor: pointer;">
-                                ◀ <strong>Presupuestos</strong>
-                            </button>
-                            <button onclick="irAPagina(2)" style="background: transparent; border: 1px dashed #aaa; color: #666; padding: 6px 14px; border-radius: 20px; font-size: 12px; cursor: pointer;">
-                                <strong>Configuración ➔</strong>
                             </button>
                         </div>
                     </div>
@@ -1600,59 +1639,53 @@
                         <img src="/public/images/cabecera_dmcar.png" alt="DM CAR Chapa y Pintura" class="doc-banner-header">
                     </div>
 
-                    <div class="doc-header">
-                        <h1>Configuración</h1>
-                        <div style="font-size: 12px; font-weight: bold; color: #ffffff;">
+                    <div class="doc-header" style="margin-bottom: 8px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%;">
+                        <h1 style="margin-top: 0.33em; margin-bottom: 0.1em; text-align: center;">Configuración</h1>
+                        <div style="font-size: 12px; font-weight: bold; color: #555555; text-align: center; text-transform: uppercase; letter-spacing: 0.5px;">
                             TALLER / PROFESIONAL
+                        </div>
+                        <div style="font-size: 13.5px; color: #ff2800; margin-top: 6px; font-weight: 800; text-align: center; letter-spacing: 0.6px; text-transform: uppercase; width: 100%; display: flex; justify-content: center; align-items: center;">
+                            App optimizada exclusivamente para móviles
                         </div>
                     </div>
 
                     <div class="form-content">
-                        <!-- AVISO OBLIGATORIO: APLICACIÓN EXCLUSIVA PARA MÓVIL -->
-                        <div style="background: #fff8f8; border: 1px solid #fecaca; border-left: 5px solid #e3000f; border-radius: 8px; padding: 14px 16px; margin-bottom: 18px; box-shadow: 0 2px 8px rgba(227,0,15,0.06);">
-                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-                                <span style="font-size: 22px;">📱</span>
-                                <strong style="color: #e3000f; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Aviso: Aplicación Exclusiva para Móvil</strong>
-                            </div>
-                            <p style="margin: 0; font-size: 13px; color: #444; line-height: 1.45;">
-                                Esta aplicación está desarrollada y optimizada <strong>exclusivamente para teléfonos móviles (smartphones)</strong>. Si accede desde un ordenador, tablet u otro dispositivo, algunas funciones (como el envío directo de WhatsApp, firma o generación de documentos) pueden no estar disponibles o no funcionar correctamente.
-                            </p>
-                        </div>
-
                         <!-- EXPLICACIÓN: ACCESO AUTOMÁTICO SIN EMAIL -->
-                        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-left: 5px solid #16a34a; border-radius: 8px; padding: 12px 16px; margin-bottom: 18px;">
+                        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-left: 5px solid #16a34a; border-radius: 8px; padding: 10px 16px; margin-bottom: 12px;">
                             <p style="margin: 0; font-size: 13px; color: #166534; line-height: 1.45;">
                                 <strong>Acceso Automático Activado:</strong> Al rellenar y guardar todos sus datos en esta página, no será necesario volver a introducir su correo electrónico para entrar a la aplicación en este dispositivo.
                             </p>
                         </div>
+
+
 
                         <div class="section-title">Registro de Datos del Taller</div>
                         <p style="font-size: 12px; color: #666; margin: 4px 0 12px 0;">Todos los campos son estrictamente obligatorios (*):</p>
 
                         <div class="input-field" style="margin-bottom: 10px;">
                             <label>Nombre o Razón Social <span style="color: #e3000f;">*</span></label>
-                            <input type="text" id="cfg-nombre" placeholder="Ej: DM CAR Chapa y Pintura">
+                            <input type="text" id="cfg-nombre" placeholder="Ej: DM CAR Chapa y Pintura" class="cfg-input">
                         </div>
 
-                        <div class="input-group">
+                        <div class="input-group" style="margin-bottom: 10px;">
                             <div class="input-field" style="flex: 1;">
                                 <label>CIF / NIF <span style="color: #e3000f;">*</span></label>
-                                <input type="text" id="cfg-cif" placeholder="Ej: B12345678">
+                                <input type="text" id="cfg-cif" placeholder="Ej: B12345678" class="cfg-input">
                             </div>
                             <div class="input-field" style="flex: 1;">
-                                <label>Teléfono (útil para WhatsApp) <span style="color: #e3000f;">*</span></label>
-                                <input type="tel" id="cfg-telefono" placeholder="Ej: 600123456">
+                                <label>TELÉFONO <span style="color: #e3000f;">*</span></label>
+                                <input type="tel" id="cfg-telefono" placeholder="Ej: 600123456" class="cfg-input">
                             </div>
                         </div>
 
                         <div class="input-field" style="margin-bottom: 10px;">
                             <label>Domicilio Fiscal <span style="color: #e3000f;">*</span></label>
-                            <input type="text" id="cfg-domicilio" placeholder="Calle, número, CP, población y provincia">
+                            <input type="text" id="cfg-domicilio" placeholder="Calle, número, CP, población y provincia" class="cfg-input">
                         </div>
 
                         <div class="input-field" style="margin-bottom: 15px;">
                             <label>Correo Electrónico (Email) <span style="color: #e3000f;">*</span></label>
-                            <input type="email" id="cfg-email" placeholder="correo@ejemplo.com">
+                            <input type="email" id="cfg-email" placeholder="correo@ejemplo.com" class="cfg-input">
                         </div>
 
                         <!-- MENSAJES DE ERROR Y ÉXITO -->
@@ -1663,27 +1696,16 @@
                             ✅ Datos guardados con éxito. No volverás a tener que introducir el email.
                         </div>
 
-                        <button class="btn-menu btn-main" onclick="guardarConfiguracion()">
-                            Guardar Configuración
-                        </button>
-
-                        <div style="margin-top: 15px; text-align: center;">
-                            <button onclick="cerrarSesionTaller()" style="background: transparent; border: 1px solid #ccc; color: #666; padding: 8px 16px; border-radius: 6px; font-size: 12px; cursor: pointer;">
-                                Cerrar Sesión / Cambiar Email
+                        <div style="display: flex; justify-content: center; gap: 20px; align-items: center; margin-top: 15px; margin-bottom: 5px;">
+                            <button class="btn-menu btn-main" onclick="cerrarSesionTaller()" style="width: auto; padding: 8px 30px; margin: 0; font-size: 15px; white-space: nowrap;">
+                                Cerrar Sesión
+                            </button>
+                            <button class="btn-menu btn-main" onclick="guardarConfiguracion()" style="width: auto; padding: 8px 30px; margin: 0; font-size: 15px;">
+                                Guardar
                             </button>
                         </div>
 
-                        <!-- Pié Corporativo DM CAR -->
-                        <div class="pie-wrapper">
-                            <img src="/public/images/pie_dmcar.png" alt="DM CAR - Tu vehículo en buenas manos" class="doc-banner-footer">
-                        </div>
-
-                        <!-- Indicador de retorno -->
-                        <div class="btn-guia-scroll" style="text-align: center; margin-top: 20px;">
-                            <button onclick="irAPagina(1)" style="background: transparent; border: 1px dashed #aaa; color: #666; padding: 6px 14px; border-radius: 20px; font-size: 12px; cursor: pointer;">
-                                ◀ Volver a <strong>Facturas</strong>
-                            </button>
-                        </div>
+                        <!-- Pié eliminado según petición -->
                     </div>
                 </div>
             </section>
@@ -1755,14 +1777,22 @@
             
             const diaSemana = ahora.toLocaleDateString('es-ES', { weekday: 'long' }).toUpperCase();
             const diaNum = ahora.getDate();
-            const mesCompleto = ahora.toLocaleDateString('es-ES', { month: 'long' }).toUpperCase();
-            const anioCorto = String(ahora.getFullYear()).slice(-2);
+            let mesTexto = ahora.toLocaleDateString('es-ES', { month: 'long' }).toUpperCase();
+            const mesNum = ahora.getMonth();
+            if (mesNum === 8 || mesTexto.startsWith('SEPT')) {
+                mesTexto = 'SEPT';
+            } else if (mesNum === 10 || mesTexto.startsWith('NOV')) {
+                mesTexto = 'NOV';
+            } else if (mesNum === 11 || mesTexto.startsWith('DIC')) {
+                mesTexto = 'DIC';
+            }
+            const anioCompleto = ahora.getFullYear();
+            const anioCorto = anioCompleto.toString().slice(-2);
             
             const fechaEl = document.getElementById('fecha-widget');
             if (fechaEl) {
                 fechaEl.innerHTML = `
-                    <div style="font-size: 28px; font-weight: bold; line-height: 1;">${diaSemana} ${diaNum}</div>
-                    <div style="font-size: 24px; font-weight: bold; color: #ccc; line-height: 1.1; margin-top: 5px; letter-spacing: 0.5px;">${mesCompleto} ${anioCorto}</div>
+                    <div style="font-size: 26px; font-weight: bold; line-height: 1; white-space: nowrap; text-shadow: 0 2px 6px rgba(0,0,0,0.9);">${diaSemana} ${diaNum} <span style="color: #ccc; font-size: 24px; letter-spacing: 0.5px;">${mesTexto} <span class="anio-landscape">${anioCompleto}</span><span class="anio-portrait">${anioCorto}</span></span></div>
                 `;
             }
         }
@@ -1867,14 +1897,9 @@
             document.body.classList.remove('modo-documento');
             document.getElementById('widget-tiempo').classList.remove('hidden');
             document.getElementById('vista-menu').classList.remove('hidden');
-            // Mostrar ambos botones simétricos exclusivamente en la segunda pantalla
-            document.getElementById('btn-volver-pantalla1').classList.remove('hidden');
-            document.getElementById('btn-config-pantalla2').classList.remove('hidden');
         }
 
         function volverAcceso() {
-            document.getElementById('btn-volver-pantalla1').classList.add('hidden');
-            document.getElementById('btn-config-pantalla2').classList.add('hidden');
             document.getElementById('vista-menu').classList.add('hidden');
             const appPaginas = document.getElementById('contenedor-app-paginas');
             if (appPaginas) appPaginas.classList.add('hidden');
@@ -1886,21 +1911,21 @@
         function abrirFormulario(tipo) {
             document.getElementById('vista-menu').classList.add('hidden');
             document.getElementById('widget-tiempo').classList.add('hidden');
-            document.getElementById('btn-volver-pantalla1').classList.add('hidden');
-            document.getElementById('btn-config-pantalla2').classList.add('hidden');
             document.body.classList.add('modo-documento');
-            document.getElementById('contenedor-app-paginas').classList.remove('hidden');
-            const btnNav = document.getElementById('btn-volver-nav');
-            if (tipo === 'Presupuesto') {
-                if (btnNav) btnNav.style.display = 'flex';
-                irAPagina(0);
-            } else if (tipo === 'Factura') {
-                if (btnNav) btnNav.style.display = 'flex';
-                irAPagina(1);
-            } else if (tipo === 'Configuracion') {
-                if (btnNav) btnNav.style.display = 'none';
-                irAPagina(2);
+            
+            const container = document.getElementById('scroll-paginas-container');
+            let targetIndex = 0;
+            if (tipo === 'Factura') targetIndex = 1;
+            else if (tipo === 'Configuracion') targetIndex = 2;
+            
+            paginaActualIndex = targetIndex;
+            
+            if (container) {
+                container.scrollLeft = targetIndex * container.clientWidth;
             }
+            
+            document.getElementById('contenedor-app-paginas').classList.remove('hidden');
+            actualizarTabsActivas(targetIndex);
         }
 
         function volverAlMenu() {
@@ -1908,8 +1933,6 @@
             document.body.classList.remove('modo-documento');
             document.getElementById('widget-tiempo').classList.remove('hidden');
             document.getElementById('vista-menu').classList.remove('hidden');
-            document.getElementById('btn-volver-pantalla1').classList.remove('hidden');
-            document.getElementById('btn-config-pantalla2').classList.remove('hidden');
         }
 
         function cerrarAlertaEmail() {
@@ -1936,10 +1959,18 @@
             const container = document.getElementById('scroll-paginas-container');
             if (!container) return;
             paginaActualIndex = Math.max(0, Math.min(2, index));
-            container.scrollTo({
-                left: paginaActualIndex * container.clientWidth,
-                behavior: 'smooth'
-            });
+            
+            const paginas = container.querySelectorAll('.pagina-item');
+            if (paginas[paginaActualIndex]) {
+                setTimeout(() => {
+                    paginas[paginaActualIndex].scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'nearest',
+                        inline: 'start'
+                    });
+                }, 10);
+            }
+            
             actualizarTabsActivas(paginaActualIndex);
         }
 
@@ -1950,16 +1981,6 @@
                 if (tab) {
                     if (i === index) tab.classList.add('active');
                     else tab.classList.remove('active');
-                }
-            }
-
-            // Eliminar/ocultar el botón redondo de volver de arriba a la derecha en la página configuración (index === 2)
-            const btnNav = document.getElementById('btn-volver-nav');
-            if (btnNav) {
-                if (index === 2) {
-                    btnNav.style.display = 'none';
-                } else {
-                    btnNav.style.display = 'flex';
                 }
             }
 
@@ -1975,27 +1996,62 @@
         if (scrollContainer) {
             let timerScroll = null;
             scrollContainer.addEventListener('scroll', () => {
+                if (document.body.classList.contains('modo-visor-cliente')) {
+                    if (scrollContainer.scrollLeft !== 0) scrollContainer.scrollLeft = 0;
+                    return;
+                }
                 window.clearTimeout(timerScroll);
                 timerScroll = setTimeout(() => {
-                    const idx = Math.round(scrollContainer.scrollLeft / scrollContainer.clientWidth);
-                    actualizarTabsActivas(idx);
+                    if (scrollContainer.clientWidth > 0) {
+                        const idx = Math.round(scrollContainer.scrollLeft / scrollContainer.clientWidth);
+                        if (idx !== paginaActualIndex) {
+                            paginaActualIndex = idx;
+                            actualizarTabsActivas(idx);
+                        }
+                    }
                 }, 50);
             }, { passive: true });
 
             scrollContainer.addEventListener('touchstart', (e) => {
+                if (document.body.classList.contains('modo-visor-cliente')) return;
                 touchStartX = e.touches[0].clientX;
                 touchStartY = e.touches[0].clientY;
             }, { passive: true });
 
             scrollContainer.addEventListener('touchend', (e) => {
+                if (document.body.classList.contains('modo-visor-cliente')) return;
                 const deltaX = e.changedTouches[0].clientX - touchStartX;
                 const deltaY = e.changedTouches[0].clientY - touchStartY;
                 // Si el gesto es horizontal con desplazamiento mayor a 60px
                 if (Math.abs(deltaX) > 60 && Math.abs(deltaX) > Math.abs(deltaY) * 1.3) {
                     if (deltaX < 0 && paginaActualIndex < 2) {
                         irAPagina(paginaActualIndex + 1);
-                    } else if (deltaX > 0 && paginaActualIndex > 0) {
-                        irAPagina(paginaActualIndex - 1);
+                    } else if (deltaX > 0) {
+                        if (paginaActualIndex > 0) {
+                            irAPagina(paginaActualIndex - 1);
+                        } else if (paginaActualIndex === 0) {
+                            volverAlMenu();
+                        }
+                    }
+                }
+            }, { passive: true });
+        }
+
+        // Swipe horizontal en la pantalla 2 (menú) para entrar a Presupuestos
+        const vistaMenuEl = document.getElementById('vista-menu');
+        if (vistaMenuEl) {
+            let menuTouchStartX = 0;
+            let menuTouchStartY = 0;
+            vistaMenuEl.addEventListener('touchstart', (e) => {
+                menuTouchStartX = e.touches[0].clientX;
+                menuTouchStartY = e.touches[0].clientY;
+            }, { passive: true });
+            vistaMenuEl.addEventListener('touchend', (e) => {
+                const deltaX = e.changedTouches[0].clientX - menuTouchStartX;
+                const deltaY = e.changedTouches[0].clientY - menuTouchStartY;
+                if (Math.abs(deltaX) > 60 && Math.abs(deltaX) > Math.abs(deltaY) * 1.3) {
+                    if (deltaX < 0) {
+                        abrirFormulario('Presupuesto');
                     }
                 }
             }, { passive: true });
@@ -2194,26 +2250,6 @@
             }
         }
 
-        // --- ACORTADOR DE ENLACES ULTRA-CORTO PARA WHATSAPP ---
-        async function acortarUrl(urlLarga) {
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 3500);
-                const res = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(urlLarga)}`, {
-                    signal: controller.signal
-                });
-                clearTimeout(timeoutId);
-                if (res.ok) {
-                    const txt = await res.text();
-                    if (txt && txt.startsWith('http')) {
-                        return txt.trim();
-                    }
-                }
-            } catch (e) {
-                console.warn('[Acortador] Usando URL completa como respaldo:', e?.message || e);
-            }
-            return urlLarga;
-        }
 
         // Toast de notificación en pantalla
         function mostrarToast(mensaje, duracion = 3500) {
@@ -2231,12 +2267,21 @@
         function marcarDocumentoComoModificado(tipo) {
             if (estadoDocumentos[tipo] && estadoDocumentos[tipo].guardado) {
                 estadoDocumentos[tipo].guardado = false;
-                const btnWa = document.getElementById(tipo === 'Presupuesto' ? 'btn-wa-pres' : 'btn-wa-fac');
+                const sufijo = tipo === 'Presupuesto' ? 'pres' : 'fac';
+                const btnWa = document.getElementById('btn-wa-' + sufijo);
                 if (btnWa) {
-                    btnWa.disabled = true;
                     btnWa.classList.remove('guardado');
                     btnWa.classList.add('no-guardado');
-                    btnWa.title = "Guarda primero el documento para enviar por WhatsApp";
+                    btnWa.title = "Guarde antes de imprimir/compartir/enviar";
+                }
+                const btnImp = document.getElementById('btn-imprimir-' + sufijo);
+                if (btnImp) {
+                    btnImp.classList.add('no-guardado');
+                    btnImp.title = "Guarde antes de imprimir/compartir/enviar";
+                }
+                const btnGuardarIcon = document.getElementById('btn-guardar-' + sufijo);
+                if (btnGuardarIcon) {
+                    btnGuardarIcon.classList.add('respiracion-guardar');
                 }
             }
         }
@@ -2328,119 +2373,13 @@
                     created_at: new Date().toISOString()
                 };
 
-                let docId = null;
-                let docShortId = null; // Short identifier for clean URLs
-
-                // 2. Insert en Supabase (si está disponible y online)
-                if (supabaseClient) {
-                    try {
-                        let clienteId = null;
-                        if (cliente.nombre) {
-                            const { data: cliExist } = await supabaseClient
-                                .from('clientes')
-                                .select('id')
-                                .or(`dni.eq.${cliente.dni || 'EMPTY'},telefono.eq.${cliente.telefono || 'EMPTY'},nombre.eq.${cliente.nombre}`)
-                                .limit(1);
-
-                            if (cliExist && cliExist.length > 0) {
-                                clienteId = cliExist[0].id;
-                            } else {
-                                const { data: newCli } = await supabaseClient
-                                    .from('clientes')
-                                    .insert([{
-                                        nombre: cliente.nombre,
-                                        dni: cliente.dni || null,
-                                        telefono: cliente.telefono || null,
-                                        direccion: cliente.direccion || null
-                                    }])
-                                    .select('id')
-                                    .single();
-                                if (newCli) clienteId = newCli.id;
-                            }
-                        }
-
-                        let vehiculoId = null;
-                        if (clienteId && vehiculo.matricula) {
-                            const { data: vehExist } = await supabaseClient
-                                .from('vehiculos')
-                                .select('id')
-                                .eq('matricula', vehiculo.matricula)
-                                .limit(1);
-
-                            if (vehExist && vehExist.length > 0) {
-                                vehiculoId = vehExist[0].id;
-                            } else {
-                                const { data: newVeh } = await supabaseClient
-                                    .from('vehiculos')
-                                    .insert([{
-                                        cliente_id: clienteId,
-                                        matricula: vehiculo.matricula,
-                                        marca: vehiculo.marca || null,
-                                        modelo: vehiculo.modelo || null
-                                    }])
-                                    .select('id')
-                                    .single();
-                                if (newVeh) vehiculoId = newVeh.id;
-                            }
-                        }
-
-                        const tabla = tipo === 'Presupuesto' ? 'presupuestos' : 'facturas';
-                        const rowInsert = {
-                            numero: numero,
-                            conceptos: conceptos,
-                            total: parseFloat(datosTotales.total) || 0,
-                            observaciones: observaciones
-                        };
-                        if (clienteId) rowInsert.cliente_id = clienteId;
-                        if (vehiculoId) rowInsert.vehiculo_id = vehiculoId;
-
-                        // Generar identificador corto y asignarlo al registro
-                        const shortPrefix = tipo === 'Presupuesto' ? 'P' : 'F';
-                        const shortCode = Math.random().toString(36).substring(2, 7).toUpperCase();
-                        docShortId = `${shortPrefix}-${shortCode}`;
-                        rowInsert.short_id = docShortId;
-
-                        if (tipo === 'Presupuesto') {
-                            rowInsert.estado = 'pendiente';
-                        } else {
-                            rowInsert.estado_cobro = 'pendiente';
-                            rowInsert.fecha = new Date().toISOString().split('T')[0];
-                        }
-
-                        const { data: savedDoc, error: insertError } = await supabaseClient
-                            .from(tabla)
-                            .insert([rowInsert])
-                            .select('id, short_id')
-                            .single();
-
-                        if (savedDoc && savedDoc.id) {
-                            docId = savedDoc.id;
-                            if (savedDoc.short_id) {
-                                docShortId = savedDoc.short_id;
-                            }
-                            console.log(`[Supabase] ${tipo} guardado con ID:`, docId);
-                            // shortId ya generado antes del insert
-                        } else if (insertError) {
-                            console.warn(`[Supabase] Inserción fallida:`, insertError.message);
-                        }
-                    } catch (supaErr) {
-                        console.warn("[Supabase] Fallo de conexión:", supaErr);
-                    }
-                }
-
-                // Generar UUID único estándar si Supabase no estuvo disponible
-                if (!docId) {
-                    docId = (typeof crypto !== 'undefined' && crypto.randomUUID) 
-                        ? crypto.randomUUID() 
-                        : 'doc_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
-                }
-
-                // Asegurar identificador corto para el documento
-                if (!docShortId) {
-                    const shortPrefix = tipo === 'Presupuesto' ? 'P' : 'F';
-                    const shortCode = Math.random().toString(36).substring(2, 7).toUpperCase();
-                    docShortId = `${shortPrefix}-${shortCode}`;
-                }
+                let docId = (typeof crypto !== 'undefined' && crypto.randomUUID) 
+                    ? crypto.randomUUID() 
+                    : 'doc_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+                
+                const shortPrefix = tipo === 'Presupuesto' ? 'P' : 'F';
+                const shortCode = Math.random().toString(36).substring(2, 7).toUpperCase();
+                let docShortId = `${shortPrefix}-${shortCode}`;
 
                 docPayload.id = docId;
                 docPayload.short_id = docShortId;
@@ -2449,24 +2388,29 @@
                 localStorage.setItem('gestarian_doc_' + docId, JSON.stringify(docPayload));
                 localStorage.setItem('gestarian_short_' + docShortId, docId);
 
-                // Construir URL limpia del documento con datos autocontenidos
+                // Guardar también en Supabase para acceso desde cualquier dispositivo (TTL 15 meses, gestión via cron)
+                if (supabaseClient) {
+                    supabaseClient.from('lite_documentos').upsert({
+                        short_id: docShortId,
+                        payload: docPayload,
+                        created_at: new Date().toISOString()
+                    }, { onConflict: 'short_id' }).then(({ error }) => {
+                        if (error) console.warn('[Supabase] Error guardando lite_documentos:', error.message);
+                        else console.log('[Supabase] Documento guardado en lite_documentos:', docShortId);
+                    });
+                }
+
+                // Construir URL limpia del documento
                 const baseUrl = window.location.origin;
+                
+                // URL corta para WhatsApp (profesional y limpia)
+                const urlDoc = `${baseUrl}/p/${docShortId}`;
+                
+                // URL de respaldo con datos codificados (no se envía al cliente)
                 const encodedData = encodeDocPayload(docPayload);
                 const urlCompleta = encodedData 
                     ? `${baseUrl}/p/${docShortId}?d=${encodedData}` 
-                    : `${baseUrl}/p/${docShortId}`;
-
-                // Acortar enlace automáticamente para WhatsApp a la versión más corta posible
-                let urlDoc = urlCompleta;
-                try {
-                    if (btnGuardar) btnGuardar.innerHTML = 'Acortando enlace...';
-                    const acortada = await acortarUrl(urlCompleta);
-                    if (acortada && acortada.startsWith('http')) {
-                        urlDoc = acortada;
-                    }
-                } catch (e) {
-                    console.warn('[Acortador] Error acortando URL, usando URL completa:', e);
-                }
+                    : urlDoc;
 
                 // 3. Cambiar estado lógico a "guardado"
                 estadoDocumentos[tipo] = {
@@ -2478,22 +2422,14 @@
                     datos: docPayload
                 };
 
-                // 4. Cambiar el icono de WhatsApp a color VERDE y activar animación pulso/bote (scale 1.10)
-                const btnWa = document.getElementById(tipo === 'Presupuesto' ? 'btn-wa-pres' : 'btn-wa-fac');
-                if (btnWa) {
-                    btnWa.disabled = false;
-                    btnWa.classList.remove('no-guardado');
-                    btnWa.classList.add('guardado');
-                    btnWa.classList.remove('animar-pulso');
-                    void btnWa.offsetWidth; // Reflow para reiniciar la animación
-                    // aumentar escala al 15% en la animación
-                    btnWa.style.setProperty('--pulse-scale', '1.15');
-                    btnWa.classList.add('animar-pulso');
-                    btnWa.title = "Enviar por WhatsApp (Listo para enviar)";
-                    setTimeout(() => {
-                        btnWa.classList.remove('animar-pulso');
-                    }, 850);
+                const sufijoGuardar = tipo === 'Presupuesto' ? 'pres' : 'fac';
+                const btnGuardarIcon = document.getElementById('btn-guardar-' + sufijoGuardar);
+                if (btnGuardarIcon) {
+                    btnGuardarIcon.classList.remove('respiracion-guardar');
                 }
+
+                descargarPDF(tipo);
+                mostrarToast(`${tipo} guardado`, 2000);
 
                 if (btnGuardar) {
                     btnGuardar.disabled = false;
@@ -2503,7 +2439,24 @@
                     }, 3000);
                 }
 
-                mostrarToast(`✓ ${tipo} guardado correctamente. ¡WhatsApp listo para enviar!`);
+                // Cambiar el icono de WhatsApp a color VERDE tras 2 segundos (cuando se desvanece el toast)
+                setTimeout(() => {
+                    const sufijo = tipo === 'Presupuesto' ? 'pres' : 'fac';
+                    const btnWa = document.getElementById('btn-wa-' + sufijo);
+                    if (btnWa) {
+                        btnWa.classList.remove('no-guardado');
+                        btnWa.classList.remove('animar-pulso'); // Limpiar clases viejas por si acaso
+                        void btnWa.offsetWidth; // Reflow
+                        btnWa.style.setProperty('--pulse-scale', '1.2'); // Efecto de respiración más notorio
+                        btnWa.classList.add('guardado');
+                        btnWa.title = "Enviar por WhatsApp (Listo para enviar)";
+                    }
+                    const btnImp = document.getElementById('btn-imprimir-' + sufijo);
+                    if (btnImp) {
+                        btnImp.classList.remove('no-guardado');
+                        btnImp.title = "Imprimir";
+                    }
+                }, 2000);
 
             } catch (err) {
                 console.error("Error al guardar documento:", err);
@@ -2519,7 +2472,7 @@
         function enviarWhatsApp(tipo) {
             const estado = estadoDocumentos[tipo];
             if (!estado || !estado.guardado) {
-                alert("Por favor, pulsa primero en 'Guardar' para registrar el documento antes de enviarlo por WhatsApp.");
+                mostrarToast("Guarde antes de imprimir/compartir/enviar", 3000);
                 return;
             }
 
@@ -2540,7 +2493,7 @@
                 telefono = '34' + telefono;
             }
 
-            // Generar mensaje de WhatsApp con formato exacto y URL corta
+            // Generar mensaje de WhatsApp con URL corta y profesional
             const urlDocumento = estado.url;
             let mensaje = '';
             if (tipo === 'Presupuesto') {
@@ -2583,7 +2536,15 @@
         async function comprobarModoVisor() {
             if (!esRutaVisor()) return;
 
-            // Ocultar de inmediato las vistas administrativas para evitar parpadeos
+            // Ocultar de inmediato la animación de inicio y las vistas administrativas
+            const splash = document.getElementById('splash-screen');
+            if (splash) {
+                splash.style.animation = 'none';
+                splash.style.display = 'none';
+                splash.style.visibility = 'hidden';
+                splash.style.opacity = '0';
+            }
+            
             const acceso = document.getElementById('vista-acceso');
             if (acceso) acceso.classList.add('hidden');
             const menu = document.getElementById('vista-menu');
@@ -2636,46 +2597,22 @@
                 }
             }
 
-            // 4️⃣ Capa 4: Si no está en local ni URL, consultar Supabase
-            if (!doc && supabaseClient) {
+            // 4️⃣ Capa 4: Si no está en local ni URL, consultar Supabase (tabla lite_documentos)
+            if (!doc && supabaseClient && shortId) {
                 try {
-                    const tabla = (shortId && shortId.startsWith('F-')) ? 'facturas' : 'presupuestos';
-                    let query = supabaseClient.from(tabla).select('*, clientes(*), vehiculos(*)');
-                    if (shortId) {
-                        query = query.eq('short_id', shortId);
-                    } else if (idDoc) {
-                        query = query.eq('id', idDoc);
-                    }
-                    const { data, error } = await query.maybeSingle();
-                    if (data && !error) {
-                        const cli = data.clientes || {};
-                        const veh = data.vehiculos || {};
-                        doc = {
-                            id: data.id,
-                            tipo: tabla === 'presupuestos' ? 'Presupuesto' : 'Factura',
-                            numero: data.numero || '',
-                            fecha: data.fecha || (data.created_at ? data.created_at.split('T')[0] : ''),
-                            cliente: {
-                                nombre: cli.nombre || '',
-                                dni: cli.dni || '',
-                                direccion: cli.direccion || '',
-                                poblacion: cli.poblacion || '',
-                                cp: cli.cp || '',
-                                telefono: cli.telefono || ''
-                            },
-                            vehiculo: {
-                                marca: veh.marca || '',
-                                modelo: veh.modelo || '',
-                                matricula: veh.matricula || '',
-                                km: veh.km || ''
-                            },
-                            conceptos: Array.isArray(data.conceptos) ? data.conceptos : [],
-                            base: data.base ? parseFloat(data.base).toFixed(2) : '',
-                            iva: data.iva ? parseFloat(data.iva).toFixed(2) : '',
-                            total: data.total ? parseFloat(data.total).toFixed(2) : '0.00',
-                            aplicaIva: data.aplica_iva !== undefined ? !!data.aplica_iva : true,
-                            observaciones: data.observaciones || ''
-                        };
+                    const { data, error } = await supabaseClient
+                        .from('lite_documentos')
+                        .select('payload')
+                        .eq('short_id', shortId)
+                        .maybeSingle();
+                    if (data && data.payload && !error) {
+                        doc = data.payload;
+                        // Cachear en localStorage para próximas visitas desde el mismo dispositivo
+                        if (doc.id) {
+                            localStorage.setItem('gestarian_doc_' + doc.id, JSON.stringify(doc));
+                            localStorage.setItem('gestarian_short_' + shortId, doc.id);
+                        }
+                        console.log('[Visor] Documento recuperado desde Supabase lite_documentos:', shortId);
                     }
                 } catch (supaErr) {
                     console.warn('[Visor] Supabase no disponible:', supaErr?.message || supaErr);
@@ -2693,9 +2630,11 @@
             const app = document.getElementById('contenedor-app-paginas');
             if (app) app.classList.remove('hidden');
             const pres = document.getElementById('pagina-presupuestos');
-            if (pres) pres.style.display = 'none';
+            if (pres) { pres.style.display = 'none'; pres.setAttribute('data-visor-oculto', 'true'); }
             const fac = document.getElementById('pagina-facturas');
-            if (fac) fac.style.display = 'none';
+            if (fac) { fac.style.display = 'none'; fac.setAttribute('data-visor-oculto', 'true'); }
+            const cfg = document.getElementById('pagina-configuracion');
+            if (cfg) { cfg.style.display = 'none'; cfg.setAttribute('data-visor-oculto', 'true'); }
 
             let errDiv = document.getElementById('visor-error-screen');
             if (!errDiv) {
@@ -2745,33 +2684,62 @@
             const otherPageId = doc.tipo === 'Presupuesto' ? 'pagina-facturas' : 'pagina-presupuestos';
 
             const otherPage = document.getElementById(otherPageId);
-            if (otherPage) otherPage.style.display = 'none';
+            if (otherPage) {
+                otherPage.style.display = 'none';
+                otherPage.setAttribute('data-visor-oculto', 'true');
+            }
+
+            const cfgPage = document.getElementById('pagina-configuracion');
+            if (cfgPage) {
+                cfgPage.style.display = 'none';
+                cfgPage.setAttribute('data-visor-oculto', 'true');
+            }
+
+            const navFija = document.querySelector('.nav-paginas-fija');
+            if (navFija) navFija.style.display = 'none';
+
+            const scrollCont = document.getElementById('scroll-paginas-container');
+            if (scrollCont) {
+                scrollCont.scrollLeft = 0;
+                scrollCont.style.overflowX = 'hidden';
+                scrollCont.style.touchAction = 'pan-y';
+            }
 
             const targetPage = document.getElementById(pageId);
-            if (targetPage) targetPage.style.display = 'block';
+            if (targetPage) {
+                targetPage.removeAttribute('data-visor-oculto');
+                targetPage.style.display = 'block';
+            }
 
-            // Insertar banner de visor superior con botón de descarga / impresión PDF
+            // Ocultar action bar original e insertar la del cliente al final de la tarjeta
             const contenedorPagina = document.getElementById(pageId);
             if (contenedorPagina) {
+                const oldActionBar = contenedorPagina.querySelector('.action-bar-icons:not(.client-action-bar)');
+                if (oldActionBar) {
+                    oldActionBar.style.display = 'none';
+                }
+                
                 const card = contenedorPagina.querySelector('.card');
-                if (card && !document.getElementById('banner-visor-' + sufijo)) {
-                    const banner = document.createElement('div');
-                    banner.id = 'banner-visor-' + sufijo;
-                    banner.className = 'banner-visor-cliente';
-                    banner.innerHTML = `
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            <span style="font-size: 20px;">📄</span>
-                            <div>
-                                <strong style="color: #fff; font-size: 14px;">${doc.tipo.toUpperCase()} DIGITAL</strong>
-                                <div style="color: #bbb; font-size: 12px;">Consulta detallada y descarga oficial</div>
-                            </div>
-                        </div>
-                        <button class="banner-visor-btn-print" onclick="window.print()">
-                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                            Descargar / Imprimir PDF
+                if (card && !document.getElementById('client-action-bar-' + sufijo)) {
+                    const clientBar = document.createElement('div');
+                    clientBar.id = 'client-action-bar-' + sufijo;
+                    clientBar.className = 'action-bar-icons client-action-bar';
+                    clientBar.style = 'display: flex; justify-content: space-evenly; align-items: center; width: 100%; margin-top: 14px; padding-bottom: 11px; box-sizing: border-box;';
+                    clientBar.innerHTML = `
+                        <button class="btn-action-icon color-azul" id="client-btn-guardar-${sufijo}" onclick="
+                            descargarPDF('${doc.tipo}', true);
+                            mostrarToast('Documento guardado', 3000);
+                        " title="Guardar PDF">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 47px; height: 47px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                        </button>
+                        <button class="btn-action-icon color-naranja" id="client-btn-imprimir-${sufijo}" onclick="window.print()" title="Imprimir">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 47px; height: 47px;"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                        </button>
+                        <button class="btn-action-icon color-verde" id="client-btn-compartir-${sufijo}" onclick="compartirDocumentoCliente('${doc.tipo}')" title="Compartir">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 47px; height: 47px;"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
                         </button>
                     `;
-                    card.insertBefore(banner, card.firstChild);
+                    card.appendChild(clientBar);
                 }
             }
 
@@ -2848,7 +2816,52 @@
             }
         }
 
+        function descargarPDF(tipo, esCliente = false) {
+            document.body.classList.remove('imprimiendo-presupuesto', 'imprimiendo-factura');
+            if (tipo === 'Presupuesto') {
+                document.body.classList.add('imprimiendo-presupuesto');
+            } else {
+                document.body.classList.add('imprimiendo-factura');
+            }
+
+            const actionBarsToHide = Array.from(document.querySelectorAll('.action-bar-icons')).filter(bar => bar.style.display !== 'none');
+            actionBarsToHide.forEach(bar => bar.style.display = 'none');
+            
+            const elemento = tipo === 'Presupuesto' ? document.getElementById('pagina-presupuestos') : document.getElementById('pagina-facturas');
+
+            const numInputId = tipo === 'Presupuesto' ? 'doc-num-pres' : 'doc-num-fac';
+            const num = document.getElementById(numInputId)?.value.trim() || '0000';
+            const cliInputId = tipo === 'Presupuesto' ? 'doc-cliente-pres' : 'doc-cliente-fac';
+            const cli = document.getElementById(cliInputId)?.value.trim() || 'Cliente';
+            const prefix = tipo === 'Presupuesto' ? 'P' : 'F';
+            let nombreArchivo = `${prefix} ${num} ${cli}.pdf`;
+            if (esCliente) {
+                nombreArchivo = `DM CAR ${nombreArchivo}`;
+            }
+
+            const optMobile = {
+              margin:       [10, 0, 10, 0],
+              filename:     nombreArchivo,
+              image:        { type: 'jpeg', quality: 0.98 },
+              html2canvas:  { scale: 2, useCORS: true },
+              jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(optMobile).from(elemento).save().then(() => {
+                document.body.classList.remove('imprimiendo-presupuesto', 'imprimiendo-factura');
+                actionBarsToHide.forEach(bar => bar.style.display = 'flex');
+            }).catch(err => {
+                console.error("Error en html2pdf:", err);
+                document.body.classList.remove('imprimiendo-presupuesto', 'imprimiendo-factura');
+                actionBarsToHide.forEach(bar => bar.style.display = 'flex');
+            });
+        }
+
         function imprimirDocumento(tipo) {
+            if (estadoDocumentos[tipo] && !estadoDocumentos[tipo].guardado) {
+                mostrarToast("Guarde antes de imprimir/compartir/enviar", 3000);
+                return;
+            }
             document.body.classList.remove('imprimiendo-presupuesto', 'imprimiendo-factura');
             if (tipo === 'Presupuesto') {
                 document.body.classList.add('imprimiendo-presupuesto');
@@ -2856,6 +2869,71 @@
                 document.body.classList.add('imprimiendo-factura');
             }
             window.print();
+        }
+
+        function compartirDocumentoCliente(tipo) {
+            if (navigator.share && navigator.canShare) {
+                const prefix = tipo === 'Presupuesto' ? 'P' : 'F';
+                const numInputId = tipo === 'Presupuesto' ? 'doc-num-pres' : 'doc-num-fac';
+                const num = document.getElementById(numInputId)?.value.trim() || '0000';
+                const cliInputId = tipo === 'Presupuesto' ? 'doc-cliente-pres' : 'doc-cliente-fac';
+                const cli = document.getElementById(cliInputId)?.value.trim() || 'Cliente';
+                const nombreArchivo = `DM CAR ${prefix} ${num} ${cli}.pdf`;
+
+                const elemento = tipo === 'Presupuesto' ? document.getElementById('pagina-presupuestos') : document.getElementById('pagina-facturas');
+                
+                const optMobile = {
+                    margin:       [10, 0, 10, 0],
+                    filename:     nombreArchivo,
+                    image:        { type: 'jpeg', quality: 0.98 },
+                    html2canvas:  { scale: 2, useCORS: true },
+                    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
+
+                mostrarToast("Generando documento para compartir...", 2000);
+                document.body.classList.remove('imprimiendo-presupuesto', 'imprimiendo-factura');
+                if (tipo === 'Presupuesto') document.body.classList.add('imprimiendo-presupuesto');
+                else document.body.classList.add('imprimiendo-factura');
+                
+                const actionBarsToHide = Array.from(document.querySelectorAll('.action-bar-icons')).filter(bar => bar.style.display !== 'none');
+                actionBarsToHide.forEach(bar => bar.style.display = 'none');
+
+                html2pdf().set(optMobile).from(elemento).outputPdf('blob').then(function(pdfBlob) {
+                    document.body.classList.remove('imprimiendo-presupuesto', 'imprimiendo-factura');
+                    actionBarsToHide.forEach(bar => bar.style.display = 'flex');
+
+                    const file = new File([pdfBlob], nombreArchivo, { type: 'application/pdf' });
+                    
+                    if (navigator.canShare({ files: [file] })) {
+                        navigator.share({
+                            files: [file],
+                            title: 'Documento DM CAR',
+                            text: 'Adjuntamos su documento de DM CAR'
+                        }).catch(err => console.log('Error compartiendo:', err));
+                    } else {
+                        // Fallback a enlace si no admite archivos
+                        navigator.share({
+                            title: 'Documento DM CAR',
+                            text: 'Aquí tienes tu documento de DM CAR',
+                            url: window.location.href
+                        }).catch(err => console.log('Error compartiendo:', err));
+                    }
+                }).catch(err => {
+                    console.error("Error generando PDF para compartir:", err);
+                    document.body.classList.remove('imprimiendo-presupuesto', 'imprimiendo-factura');
+                    actionBarsToHide.forEach(bar => bar.style.display = 'flex');
+                    mostrarToast("Error al generar el documento", 3000);
+                });
+            } else if (navigator.share) {
+                // Fallback a solo enlace si canShare no existe
+                navigator.share({
+                    title: 'Documento DM CAR',
+                    text: 'Aquí tienes tu documento de DM CAR',
+                    url: window.location.href
+                }).catch(err => console.log('Error compartiendo:', err));
+            } else {
+                alert('La función de compartir no está disponible en este navegador. Puedes copiar el enlace manualmente de la barra de direcciones.');
+            }
         }
 
         // --- GESTIÓN DE CONFIGURACIÓN ---
@@ -2904,12 +2982,11 @@
                 document.getElementById('widget-tiempo').classList.remove('hidden');
                 document.getElementById('vista-acceso').classList.remove('hidden');
                 document.getElementById('btn-volver-pantalla1').classList.add('hidden');
-                document.getElementById('btn-config-pantalla2').classList.add('hidden');
                 document.getElementById('user-email').value = '';
             }
         }
 
-        // --- CONTROL DE PANTALLA COMPLETA (FULLSCREEN) EN MÓVIL ---
+        // --- PANTALLA COMPLETA EN MÓVIL (SIN MENSAJES NI AVISOS) ---
         let fullscreenCooldown = false;
 
         function activarFullscreen() {
@@ -2937,119 +3014,105 @@
             }
         }
 
-        // Activar al tocar la pantalla en dispositivo móvil (excluyendo controles interactivos)
+        // Activar pantalla completa en móvil al interactuar (excluyendo campos interactivos)
         window.addEventListener('touchstart', function(e) {
-            if (e.target.closest('#btn-salir-fullscreen, button, input, textarea, select, a, .glass-btn, .btn-menu-big, .nav-tab, .action-btn')) return;
+            if (e.target.closest('button, input, textarea, select, a, .glass-btn, .btn-menu-big, .nav-tab, .action-btn')) return;
             activarFullscreen();
         }, { passive: true });
 
         window.addEventListener('click', function(e) {
-            if (e.target.closest('#btn-salir-fullscreen, button, input, textarea, select, a, .glass-btn, .btn-menu-big, .nav-tab, .action-btn')) return;
+            if (e.target.closest('button, input, textarea, select, a, .glass-btn, .btn-menu-big, .nav-tab, .action-btn')) return;
             if (window.innerWidth <= 768) {
                 activarFullscreen();
             }
         });
 
-        // Actualizar visibilidad del tirador al entrar/salir de fullscreen
-        function actualizarEstadoFullscreen() {
-            const isFS = !!(document.fullscreenElement || document.webkitFullscreenElement);
-            const btnSalir = document.getElementById('btn-salir-fullscreen');
-            if (btnSalir) {
-                if (isFS) {
-                    btnSalir.classList.remove('hidden');
-                } else {
-                    btnSalir.classList.add('hidden');
-                    btnSalir.style.transform = 'translate(-50%, 0)';
-                }
+        // Arrastrar hacia abajo desde arriba: salir de pantalla completa, o cerrar app si ya no está en fullscreen
+        let startYFS = 0;
+        let isDraggingFS = false;
+
+        function animacionApagar() {
+            const splash = document.getElementById('splash-screen');
+            if (splash) {
+                splash.style.transition = 'none';
+                splash.style.visibility = 'visible';
+                splash.style.opacity = '0';
+                splash.style.transform = 'scale(1.2)';
+                void splash.offsetWidth;
+                splash.style.transition = 'opacity 0.7s ease, transform 0.7s ease';
+                splash.style.opacity = '1';
+                splash.style.transform = 'scale(0.85)';
+                setTimeout(() => {
+                    cerrarAplicacion();
+                }, 800);
+            } else {
+                cerrarAplicacion();
             }
         }
-        document.addEventListener('fullscreenchange', actualizarEstadoFullscreen);
-        document.addEventListener('webkitfullscreenchange', actualizarEstadoFullscreen);
-        document.addEventListener('mozfullscreenchange', actualizarEstadoFullscreen);
-        document.addEventListener('MSFullscreenChange', actualizarEstadoFullscreen);
 
-        // Lógica de arrastre hacia abajo del botón para salir de fullscreen
-        const btnSalirFS = document.getElementById('btn-salir-fullscreen');
-        if (btnSalirFS) {
-            let startY = 0;
-            let currentY = 0;
-            let isDragging = false;
+        function cerrarAplicacion() {
+            try {
+                window.close();
+            } catch(e) {}
+            // Fallback para PWAs / navegadores móviles
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = 'about:blank';
+            }
+        }
 
-            const onDragStart = (clientY) => {
-                startY = clientY;
-                currentY = clientY;
-                isDragging = true;
-                btnSalirFS.style.transition = 'none';
-            };
+        document.addEventListener('touchstart', function(e) {
+            if (e.touches.length === 1 && window.scrollY === 0) {
+                startYFS = e.touches[0].clientY;
+                isDraggingFS = true;
+            }
+        }, { passive: true });
 
-            const onDragMove = (clientY) => {
-                if (!isDragging) return;
-                currentY = clientY;
-                const deltaY = currentY - startY;
-                if (deltaY > 0) {
-                    // Arrastre hacia abajo visual
-                    btnSalirFS.style.transform = `translate(-50%, ${deltaY}px)`;
-                    if (deltaY > 60) {
-                        // Si se arrastra más de 60px, salir de fullscreen
-                        isDragging = false;
-                        btnSalirFS.style.transition = 'transform 0.2s ease';
-                        btnSalirFS.style.transform = 'translate(-50%, 0)';
+        document.addEventListener('touchmove', function(e) {
+            if (isDraggingFS && e.touches.length === 1) {
+                const currentY = e.touches[0].clientY;
+                if (currentY - startYFS > 85) {
+                    isDraggingFS = false;
+                    const isFS = !!(document.fullscreenElement || document.webkitFullscreenElement);
+                    if (isFS) {
                         salirFullscreen();
                     }
                 }
-            };
+            }
+        }, { passive: true });
 
-            const onDragEnd = () => {
-                if (!isDragging) return;
-                isDragging = false;
-                btnSalirFS.style.transition = 'transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-                const deltaY = currentY - startY;
-                if (deltaY > 30) {
-                    btnSalirFS.style.transform = 'translate(-50%, 0)';
+        document.addEventListener('touchend', function() {
+            isDraggingFS = false;
+        });
+
+        // Soporte tecla Escape en ordenadores
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                if (document.fullscreenElement || document.webkitFullscreenElement) {
                     salirFullscreen();
-                } else {
-                    btnSalirFS.style.transform = 'translate(-50%, 0)';
                 }
+            }
+        });
+
+        // --- REGISTRO SEGURO DE SERVICE WORKER PARA INSTALACIÓN PWA ---
+        if ('serviceWorker' in navigator) {
+            const registerSW = () => {
+                navigator.serviceWorker.register('/public/sw.js')
+                    .then(reg => {
+                        console.log('PWA Service Worker listo:', reg.scope);
+                    })
+                    .catch(err => {
+                        // Silenciar error en contextos restringidos o preview
+                        console.debug('PWA Service Worker info:', err);
+                    });
             };
 
-            // Soporte Pointer Events (Touch + Mouse moderno)
-            btnSalirFS.addEventListener('pointerdown', function(e) {
-                try { btnSalirFS.setPointerCapture(e.pointerId); } catch(err) {}
-                onDragStart(e.clientY);
-            });
-
-            btnSalirFS.addEventListener('pointermove', function(e) {
-                onDragMove(e.clientY);
-            });
-
-            btnSalirFS.addEventListener('pointerup', function(e) {
-                try { btnSalirFS.releasePointerCapture(e.pointerId); } catch(err) {}
-                onDragEnd();
-            });
-
-            btnSalirFS.addEventListener('pointercancel', function(e) {
-                try { btnSalirFS.releasePointerCapture(e.pointerId); } catch(err) {}
-                onDragEnd();
-            });
-
-            // Fallback Touch Events tradicionales
-            btnSalirFS.addEventListener('touchstart', function(e) {
-                if (e.touches.length === 1) onDragStart(e.touches[0].clientY);
-            }, { passive: true });
-
-            window.addEventListener('touchmove', function(e) {
-                if (isDragging && e.touches.length === 1) onDragMove(e.touches[0].clientY);
-            }, { passive: true });
-
-            window.addEventListener('touchend', function(e) {
-                onDragEnd();
-            });
-
-            // Permitir también salir con pulsación directa
-            btnSalirFS.addEventListener('click', function(e) {
-                e.stopPropagation();
-                salirFullscreen();
-            });
+            if (document.readyState === 'complete') {
+                registerSW();
+            } else {
+                window.addEventListener('load', registerSW);
+            }
         }
     </script>
 </body>

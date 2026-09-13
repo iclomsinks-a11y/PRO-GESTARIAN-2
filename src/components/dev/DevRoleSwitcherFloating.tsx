@@ -318,6 +318,40 @@ export const DevRoleSwitcherFloating: React.FC = () => {
             </div>
           </div>
 
+          {/* Selector de Entorno: Landing (gestarian.com) vs Pro (gestarian2) */}
+          <div className="flex items-center gap-1.5 p-1 bg-slate-950/80 rounded-xl border border-slate-800">
+            <button
+              type="button"
+              onClick={() => {
+                sessionStorage.setItem('gestarian_view_mode', 'landing');
+                navigate('/landing');
+                setIsOpen(false);
+              }}
+              className={`flex-1 py-1.5 px-2 rounded-lg font-bold text-[10px] transition-all flex items-center justify-center gap-1.5 ${
+                location.pathname === '/landing' || (location.pathname === '/' && sessionStorage.getItem('gestarian_view_mode') !== 'pro')
+                  ? 'bg-indigo-600 text-white shadow-md'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-900'
+              }`}
+            >
+              <span>🌐 gestarian.com (Landing)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                sessionStorage.setItem('gestarian_view_mode', 'pro');
+                navigate('/inicio');
+                setIsOpen(false);
+              }}
+              className={`flex-1 py-1.5 px-2 rounded-lg font-bold text-[10px] transition-all flex items-center justify-center gap-1.5 ${
+                location.pathname !== '/landing' && (location.pathname === '/inicio' || location.pathname.startsWith('/app') || sessionStorage.getItem('gestarian_view_mode') === 'pro')
+                  ? 'bg-sky-600 text-white shadow-md'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-900'
+              }`}
+            >
+              <span>⚡ gestarian2 (App Pro)</span>
+            </button>
+          </div>
+
           {/* 4 Mode Switch Buttons */}
           <div className="space-y-1.5">
             <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">

@@ -515,19 +515,124 @@ export async function loginAsDeveloper(
   return { success: true };
 }
 
+// User Password Storage & Device Registration
+const STORAGE_USER_PASSWORDS = 'gestarian_users_passwords';
+const STORAGE_DEVICE_REMEMBER = 'gestarian_remember_device';
+
+const DEFAULT_PASSWORDS: Record<string, string> = {
+  'gestion@talleresdmcar.es': 'gestarian2026',
+  'taller.castellana@gmail.com': 'gestarian2026',
+  'info@autojimenez.es': 'gestarian2026',
+  'contacto@valenciapremium.com': 'gestarian2026',
+};
+
+export function getStoredUserPasswords(): Record<string, string> {
+  try {
+    const raw = localStorage.getItem(STORAGE_USER_PASSWORDS);
+    if (raw) {
+      return { ...DEFAULT_PASSWORDS, ...JSON.parse(raw) };
+    }
+  } catch (e) {}
+  return { ...DEFAULT_PASSWORDS };
+}
+
+export function saveStoredUserPasswords(passwords: Record<string, string>): void {
+  try {
+    localStorage.setItem(STORAGE_USER_PASSWORDS, JSON.stringify(passwords));
+  } catch (e) {}
+}
+
+export async function verifyUserPassword(email: string, passwordAttempt: string): Promise<boolean> {
+  const normEmail = email.toLowerCase().trim();
+  const passwords = getStoredUserPasswords();
+  const storedPassword = passwords[normEmail];
+
+  // Si no tiene contraseña previa, se asigna la primera que introduce si es válida
+  if (!storedPassword) {
+    if (passwordAttempt && passwordAttempt.trim().length >= 4) {
+      passwords[normEmail] = passwordAttempt.trim();
+      saveStoredUserPasswords(passwords);
+      return true;
+    }
+    return false;
+  }
+
+  return storedPassword === passwordAttempt.trim();
+}
+
+export async function changeUserPassword(
+  email: string, 
+  currentPassword: string, 
+  newPassword: string
+): Promise<{ success: boolean; error?: string }> {
+  const normEmail = email.toLowerCase().trim();
+  if (!newPassword || newPassword.trim().length < 4) {
+    return { success: false, error: 'La nueva contraseña debe tener al menos 4 caracteres.' };
+  }
+
+  const passwords = getStoredUserPasswords();
+  const existingPassword = passwords[normEmail];
+
+  if (existingPassword && existingPassword !== currentPassword.trim()) {
+    return { success: false, error: 'La contraseña actual no es correcta.' };
+  }
+
+  passwords[normEmail] = newPassword.trim();
+  saveStoredUserPasswords(passwords);
+
+  // Sincronización en Supabase si está disponible
+  try {
+    await supabase.from('usuarios').update({ password_hash: newPassword.trim() }).eq('email', normEmail);
+  } catch (e) {}
+
+  return { success: true };
+}
+
+export function isDeviceRegistered(): boolean {
+  try {
+    const rawUser = localStorage.getItem(STORAGE_AUTH_USER);
+    if (rawUser) {
+      const user = JSON.parse(rawUser);
+      return !!(user && user.email && user.activo);
+    }
+  } catch (e) {}
+  return false;
+}
+
+export function clearDeviceRegistration(): void {
+  try {
+    localStorage.removeItem(STORAGE_AUTH_USER);
+    localStorage.removeItem(STORAGE_DEVICE_REMEMBER);
+    perfilActual = null;
+    notifyListeners();
+  } catch (e) {}
+}
+
 /**
  * Log in as Usuario (Dueño / Gerente de Taller)
  */
 export async function loginAsUsuario(
   email: string, 
-  _password?: string
+  password?: string,
+  rememberDevice: boolean = true
 ): Promise<{ success: boolean; error?: string; user?: PerfilUsuario }> {
   const normalizedEmail = email.toLowerCase().trim();
 
   // If developer is logging in with their email, promote to Developer
   if (normalizedEmail === MASTER_DEVELOPER_EMAIL.toLowerCase()) {
-    const res = await loginAsDeveloper(MASTER_DEVELOPER_KEY, normalizedEmail);
+    const res = await loginAsDeveloper(password || MASTER_DEVELOPER_KEY, normalizedEmail);
     return { success: res.success, error: res.error, user: perfilActual || undefined };
+  }
+
+  // Validación de contraseña si fue enviada
+  if (password !== undefined) {
+    const isValidPassword = await verifyUserPassword(normalizedEmail, password);
+    if (!isValidPassword) {
+      return {
+        success: false,
+        error: 'Contraseña incorrecta. Por favor verifícala e inténtalo de nuevo.'
+      };
+    }
   }
 
   const solicitudes = getStoredSolicitudes();
@@ -555,9 +660,12 @@ export async function loginAsUsuario(
       };
 
       perfilActual = demoPerfil;
-      try {
-        localStorage.setItem(STORAGE_AUTH_USER, JSON.stringify(demoPerfil));
-      } catch (e) {}
+      if (rememberDevice) {
+        try {
+          localStorage.setItem(STORAGE_AUTH_USER, JSON.stringify(demoPerfil));
+          localStorage.setItem(STORAGE_DEVICE_REMEMBER, 'true');
+        } catch (e) {}
+      }
       notifyListeners();
       return { success: true, user: demoPerfil };
     }
@@ -601,9 +709,12 @@ export async function loginAsUsuario(
   };
 
   perfilActual = userProfile;
-  try {
-    localStorage.setItem(STORAGE_AUTH_USER, JSON.stringify(userProfile));
-  } catch (e) {}
+  if (rememberDevice) {
+    try {
+      localStorage.setItem(STORAGE_AUTH_USER, JSON.stringify(userProfile));
+      localStorage.setItem(STORAGE_DEVICE_REMEMBER, 'true');
+    } catch (e) {}
+  }
 
   notifyListeners();
   return { success: true, user: userProfile };

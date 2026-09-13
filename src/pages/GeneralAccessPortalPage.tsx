@@ -41,6 +41,7 @@ export const GeneralAccessPortalPage: React.FC = () => {
 
   // Login form states
   const [usuarioEmail, setUsuarioEmail] = useState('gestion@talleresdmcar.es')
+  const [usuarioPassword, setUsuarioPassword] = useState('gestarian2026')
   const [autorizadoInput, setAutorizadoInput] = useState('1234')
   const [clienteMatricula, setClienteMatricula] = useState('1234-KMT')
   const [clienteDoc, setClienteDoc] = useState('600 123 456')
@@ -65,7 +66,7 @@ export const GeneralAccessPortalPage: React.FC = () => {
     setErrorMsg('')
     setLoading(true)
     try {
-      const res = await loginAsUsuario(usuarioEmail)
+      const res = await loginAsUsuario(usuarioEmail, usuarioPassword)
       if (res.success) {
         addToast(`Bienvenido a ${res.user?.tallerNombre || 'GESTARIAN'}`, 'success')
         navigate('/')
@@ -294,7 +295,10 @@ export const GeneralAccessPortalPage: React.FC = () => {
                   <label className="block text-slate-400 mb-1 font-medium">Contraseña de Acceso</label>
                   <input
                     type="password"
-                    defaultValue="••••••••"
+                    required
+                    value={usuarioPassword}
+                    onChange={(e) => setUsuarioPassword(e.target.value)}
+                    placeholder="Introduce contraseña"
                     className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-emerald-500"
                   />
                 </div>

@@ -12,6 +12,8 @@ import { DeveloperDashboardPage } from './pages/DeveloperDashboardPage'
 import { GeneralAccessPortalPage } from './pages/GeneralAccessPortalPage'
 import { PortalClientePage } from './pages/PortalClientePage'
 import { GestionEmpleadosPage } from './pages/GestionEmpleadosPage'
+import { LandingPage } from './pages/LandingPage'
+import { LoginPage } from './pages/LoginPage'
 
 // Workshop ERP Pages
 import { InicioPage } from './pages/InicioPage'
@@ -32,14 +34,13 @@ import { MetisIAPage } from './pages/MetisIAPage'
 /**
  * Root Entry Gate:
  * In case of no active session or initial development access,
- * prioritize and redirect directly to Developer Portal Authentication (/dev-auth).
+ * prioritize and redirect to Login or Developer Portal Authentication.
  */
 const RootEntryGate: React.FC = () => {
   const { perfil, rolActual } = useAuth()
 
   if (!perfil) {
-    // No active session -> Prioritize Developer Authentication as requested
-    return <Navigate to="/dev-auth" replace />
+    return <Navigate to="/login" replace />
   }
 
   // If logged in as client -> go to client portal
@@ -51,12 +52,60 @@ const RootEntryGate: React.FC = () => {
   return <InicioPage />
 }
 
+/**
+ * RootDispatcher:
+ * Differentiates between gestarian.com (Central Landing with 3 cards)
+ * and gestarian2.web.app (Gestarian Pro ERP application).
+ */
+const RootDispatcher: React.FC = () => {
+  const host = window.location.hostname.toLowerCase()
+  const search = window.location.search
+  const viewMode = sessionStorage.getItem('gestarian_view_mode')
+
+  // In gestarian2.web.app (or gestarian2.firebaseapp.com) -> ALWAYS GESTARIAN PRO
+  if (host.includes('gestarian2')) {
+    return (
+      <Layout>
+        <RootEntryGate />
+      </Layout>
+    )
+  }
+
+  // In www.gestarian.com or gestarian.com -> ALWAYS CENTRAL LANDING PAGE
+  if (host.includes('gestarian.com')) {
+    return <LandingPage />
+  }
+
+  // In localhost or local network:
+  // If user selected Pro or explicitly navigated to Pro mode -> Render Pro
+  if (viewMode === 'pro' || search.includes('pro=true')) {
+    return (
+      <Layout>
+        <RootEntryGate />
+      </Layout>
+    )
+  }
+
+  // Default on localhost: Central Landing Page
+  return <LandingPage />
+}
+
 export default function App() {
   return (
     <ToastProvider>
       <HashRouter>
         <DevRoleSwitcherFloating />
         <Routes>
+          {/* Root Path: Automatically dispatched based on host/mode */}
+          <Route path="/" element={<RootDispatcher />} />
+
+          {/* Central Landing Page with 3 cards (Lite, Pro, Enterprise) */}
+          <Route path="/landing" element={<LandingPage />} />
+          <Route path="/planes" element={<LandingPage />} />
+
+          {/* User & Client Authentication Page */}
+          <Route path="/login" element={<LoginPage />} />
+
           {/* Public & Developer Direct Portals (No Workshop Layout) */}
           <Route path="/dev-auth" element={<DeveloperAuthPage />} />
           
@@ -80,13 +129,12 @@ export default function App() {
             } 
           />
 
-          {/* Workshop ERP Application (With Layout, Header, Sidebar & Simulation Banner) */}
-          <Route path="/" element={<Layout />}>
-            {/* Root Route: Prioritizes Developer Auth if no session */}
-            <Route index element={<RootEntryGate />} />
+          {/* Workshop ERP Application: Gestarian Pro (With Layout, Header, Sidebar & Simulation Banner) */}
+          <Route element={<Layout />}>
+            <Route path="/inicio" element={<RootEntryGate />} />
 
             <Route 
-              path="clientes" 
+              path="/clientes" 
               element={
                 <AuthGuard allowedRoles={['DESARROLLADOR', 'USUARIO', 'AUTORIZADO']} requiredPermission="clientes">
                   <ClientesPage />
@@ -95,7 +143,7 @@ export default function App() {
             />
 
             <Route 
-              path="vehiculos" 
+              path="/vehiculos" 
               element={
                 <AuthGuard allowedRoles={['DESARROLLADOR', 'USUARIO', 'AUTORIZADO']} requiredPermission="vehiculos">
                   <VehiculosPage />
@@ -104,7 +152,7 @@ export default function App() {
             />
 
             <Route 
-              path="solicitudes" 
+              path="/solicitudes" 
               element={
                 <AuthGuard allowedRoles={['DESARROLLADOR', 'USUARIO', 'AUTORIZADO']}>
                   <SolicitudesPage />
@@ -113,7 +161,7 @@ export default function App() {
             />
 
             <Route 
-              path="presupuestos" 
+              path="/presupuestos" 
               element={
                 <AuthGuard allowedRoles={['DESARROLLADOR', 'USUARIO', 'AUTORIZADO']} requiredPermission="presupuestos_crear">
                   <PresupuestosPage />
@@ -122,7 +170,7 @@ export default function App() {
             />
 
             <Route 
-              path="tarifas" 
+              path="/tarifas" 
               element={
                 <AuthGuard allowedRoles={['DESARROLLADOR', 'USUARIO', 'AUTORIZADO']}>
                   <ListadoPreciosPage />
@@ -131,7 +179,7 @@ export default function App() {
             />
 
             <Route 
-              path="expedientes" 
+              path="/expedientes" 
               element={
                 <AuthGuard allowedRoles={['DESARROLLADOR', 'USUARIO', 'AUTORIZADO']} requiredPermission="expedientes">
                   <ExpedientesPage />
@@ -140,7 +188,7 @@ export default function App() {
             />
 
             <Route 
-              path="citas" 
+              path="/citas" 
               element={
                 <AuthGuard allowedRoles={['DESARROLLADOR', 'USUARIO', 'AUTORIZADO']} requiredPermission="citas">
                   <CitasPage />
@@ -149,7 +197,7 @@ export default function App() {
             />
 
             <Route 
-              path="reparaciones" 
+              path="/reparaciones" 
               element={
                 <AuthGuard allowedRoles={['DESARROLLADOR', 'USUARIO', 'AUTORIZADO']} requiredPermission="reparaciones">
                   <ReparacionesPage />
@@ -158,7 +206,7 @@ export default function App() {
             />
 
             <Route 
-              path="facturas" 
+              path="/facturas" 
               element={
                 <AuthGuard allowedRoles={['DESARROLLADOR', 'USUARIO', 'AUTORIZADO']} requiredPermission="facturas_ver">
                   <FacturasPage />
@@ -168,7 +216,7 @@ export default function App() {
 
             {/* Balances & Fiscal: strictly for Usuario (Dueño) and Desarrollador */}
             <Route 
-              path="balances" 
+              path="/balances" 
               element={
                 <AuthGuard allowedRoles={['DESARROLLADOR', 'USUARIO']}>
                   <BalancesPage />
@@ -178,7 +226,7 @@ export default function App() {
 
             {/* Employee Management: strictly for Usuario (Dueño) and Desarrollador */}
             <Route 
-              path="empleados" 
+              path="/empleados" 
               element={
                 <AuthGuard allowedRoles={['DESARROLLADOR', 'USUARIO']}>
                   <GestionEmpleadosPage />
@@ -187,7 +235,7 @@ export default function App() {
             />
 
             <Route 
-              path="metis" 
+              path="/metis" 
               element={
                 <AuthGuard allowedRoles={['DESARROLLADOR', 'USUARIO', 'AUTORIZADO']}>
                   <MetisIAPage />
@@ -197,17 +245,33 @@ export default function App() {
 
             {/* Workshop Configuration: strictly for Usuario (Dueño) and Desarrollador */}
             <Route 
-              path="configuracion" 
+              path="/configuracion" 
               element={
                 <AuthGuard allowedRoles={['DESARROLLADOR', 'USUARIO']}>
                   <ConfiguracionPage />
                 </AuthGuard>
               } 
             />
-
-            {/* Fallback route */}
-            <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
+
+          {/* Compatibility /app routes: redirect /app/clientes to /clientes, /app to /inicio, etc. */}
+          <Route path="/app" element={<Navigate to="/inicio" replace />} />
+          <Route path="/app/clientes" element={<Navigate to="/clientes" replace />} />
+          <Route path="/app/vehiculos" element={<Navigate to="/vehiculos" replace />} />
+          <Route path="/app/solicitudes" element={<Navigate to="/solicitudes" replace />} />
+          <Route path="/app/presupuestos" element={<Navigate to="/presupuestos" replace />} />
+          <Route path="/app/tarifas" element={<Navigate to="/tarifas" replace />} />
+          <Route path="/app/expedientes" element={<Navigate to="/expedientes" replace />} />
+          <Route path="/app/citas" element={<Navigate to="/citas" replace />} />
+          <Route path="/app/reparaciones" element={<Navigate to="/reparaciones" replace />} />
+          <Route path="/app/facturas" element={<Navigate to="/facturas" replace />} />
+          <Route path="/app/balances" element={<Navigate to="/balances" replace />} />
+          <Route path="/app/empleados" element={<Navigate to="/empleados" replace />} />
+          <Route path="/app/metis" element={<Navigate to="/metis" replace />} />
+          <Route path="/app/configuracion" element={<Navigate to="/configuracion" replace />} />
+
+          {/* Global Fallback: redirects to root */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </HashRouter>
     </ToastProvider>

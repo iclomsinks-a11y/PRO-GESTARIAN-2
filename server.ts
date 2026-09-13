@@ -78,6 +78,43 @@ async function startServer() {
       server: { middlewareMode: true },
       appType: 'spa',
     });
+
+    // Servir Gestarian Lite explícitamente si se solicita /lite o /lite.html
+    app.get(['/lite', '/lite.html'], (_req, res) => {
+      res.sendFile(path.resolve(process.cwd(), 'index.html'));
+    });
+
+    // Interceptar la raíz '/' y rutas de navegación SPA para servir index.app.html (GESTARIAN React)
+    app.use(async (req, res, next) => {
+      const url = req.originalUrl;
+      const isInternalAsset = req.path.startsWith('/@') || 
+                              req.path.startsWith('/src') || 
+                              req.path.startsWith('/node_modules') || 
+                              req.path.startsWith('/api') ||
+                              req.path.startsWith('/lite');
+
+      if (!isInternalAsset && req.method === 'GET' && (
+        req.path === '/' || 
+        req.path === '/index.html' || 
+        (req.headers.accept && req.headers.accept.includes('text/html')) ||
+        !req.path.includes('.')
+      )) {
+        try {
+          const fs = await import('fs/promises');
+          const rawTemplate = await fs.readFile(path.resolve(process.cwd(), 'index.app.html'), 'utf-8');
+          const template = rawTemplate.replace(/^\uFEFF/, '');
+          const html = await vite.transformIndexHtml(url, template);
+          res.status(200).set({ 'Content-Type': 'text/html; charset=utf-8' }).end(html);
+          return;
+        } catch (e: any) {
+          vite.ssrFixStacktrace(e);
+          next(e);
+          return;
+        }
+      }
+      next();
+    });
+
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');

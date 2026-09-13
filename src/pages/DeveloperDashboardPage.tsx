@@ -310,7 +310,7 @@ export const DeveloperDashboardPage: React.FC = () => {
                   </div>
 
                   <button
-                    onClick={() => handleSimulateRole('USUARIO', '/')}
+                    onClick={() => handleSimulateRole('USUARIO', '/inicio')}
                     className="w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md shadow-emerald-600/20 transition-all flex items-center justify-center gap-2"
                   >
                     <span>Simular Portal Usuario</span>
@@ -341,7 +341,7 @@ export const DeveloperDashboardPage: React.FC = () => {
                   </div>
 
                   <button
-                    onClick={() => handleSimulateRole('AUTORIZADO', '/')}
+                    onClick={() => handleSimulateRole('AUTORIZADO', '/inicio')}
                     className="w-full py-2.5 px-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs shadow-md shadow-amber-600/20 transition-all flex items-center justify-center gap-2"
                   >
                     <span>Simular Portal Autorizado</span>
@@ -538,7 +538,7 @@ export const DeveloperDashboardPage: React.FC = () => {
                           {isActive && (
                             <div className="flex items-center gap-2">
                               <button
-                                onClick={() => handleSimulateRole('USUARIO', '/')}
+                                onClick={() => handleSimulateRole('USUARIO', '/inicio')}
                                 className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-colors flex items-center gap-1.5"
                                 title="Inspeccionar este taller como Usuario"
                               >
