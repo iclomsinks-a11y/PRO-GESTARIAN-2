@@ -1,5 +1,5 @@
 import { jsPDF } from 'jspdf'
-import type { Presupuesto, Factura, Cliente, Vehiculo, Configuracion, Cobro } from './types'
+import type { Presupuesto, Factura, Cliente, Vehiculo, Configuracion } from './types'
 import { sendEstimate, sendInvoice } from '../services/communicationService'
 import { supabase } from './supabase'
 import { generateVerifactuQRDataUrlSync, VERIFACTU_NORMATIVA_TEXT } from './verifactuService'
@@ -24,24 +24,6 @@ export function getLocalidadFromCP(cp: string): string {
   return PROVINCIAS_ESPANOLAS[prefix] || ''
 }
 
-/**
- * Renderiza el logo blanco y negro (logo_bn) a la derecha de los datos fiscales de la empresa o autónomo.
- */
-function renderLogoBnDerecha(doc: jsPDF, config?: Configuracion | null, x = 95, y = 16, size = 22) {
-  if (config?.logo_bn) {
-    try {
-      const format = config.logo_bn.includes('data:image/png') ? 'PNG' : 'JPEG'
-      doc.addImage(config.logo_bn, format, x, y, size, size)
-    } catch (e) {
-      try {
-        doc.addImage(config.logo_bn, 'PNG', x, y, size, size)
-      } catch (err) {
-        // Fallback silencioso si el formato base64 no es procesable por jsPDF
-      }
-    }
-  }
-}
-
 export function generatePresupuestoPDF(
   presupuesto: Partial<Presupuesto>,
   cliente?: Cliente | null,
@@ -63,11 +45,13 @@ export function generatePresupuestoPDF(
   const iva = aplicarIva ? subtotal * 0.21 : 0
   const total = subtotal + iva
 
-  const primaryColor = [15, 23, 42]
-  const accentColor = [2, 132, 199]
+  // Palette
+  const primaryColor = [15, 23, 42] // #0f172a
+  const accentColor = [2, 132, 199] // #0284c7
   const grayDark = [51, 65, 85]
   const grayLight = [248, 250, 252]
 
+  // Header - Empresa
   doc.setFont('Helvetica', 'bold')
   doc.setFontSize(18)
   doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2])
@@ -81,53 +65,28 @@ export function generatePresupuestoPDF(
   if (config?.direccion) { doc.text(config.direccion, 14, yEmpresa); yEmpresa += 4 }
   if (config?.telefono) { doc.text(`Tel: ${config.telefono}`, 14, yEmpresa); yEmpresa += 4 }
   if (config?.email) { doc.text(`Email: ${config.email}`, 14, yEmpresa); yEmpresa += 4 }
-  renderLogoBnDerecha(doc, config, 92, 16, 22)
 
-  const numeroSolicitud = (presupuesto as any).numero_solicitud || 
-    ((presupuesto.numero && presupuesto.numero.startsWith('SOL-')) ? presupuesto.numero : null)
-  const numeroPresupuesto = presupuesto.numero && !presupuesto.numero.startsWith('SOL-') 
-    ? presupuesto.numero 
-    : (expediente ? `P-${expediente}` : 'PRES-0001')
-  const numeroExp = expediente || presupuesto.expediente_id || ''
-
-  let curHeaderY = 20
+  // Header - Presupuesto Title (Right aligned)
   doc.setFont('Helvetica', 'bold')
-  doc.setFontSize(18)
+  doc.setFontSize(22)
   doc.setTextColor(accentColor[0], accentColor[1], accentColor[2])
-  doc.text('PRESUPUESTO', 196, curHeaderY, { align: 'right' })
-  curHeaderY += 5.5
+  doc.text('PRESUPUESTO', 196, 20, { align: 'right' })
 
-  if (numeroSolicitud) {
-    doc.setFont('Helvetica', 'bold')
-    doc.setFontSize(9)
-    doc.setTextColor(grayDark[0], grayDark[1], grayDark[2])
-    doc.text(`SOLICITUD: ${numeroSolicitud}`, 196, curHeaderY, { align: 'right' })
-    curHeaderY += 4.5
-  }
-
-  doc.setFont('Helvetica', 'bold')
-  doc.setFontSize(10.5)
+  doc.setFontSize(11)
   doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2])
-  doc.text(`PRESUPUESTO: ${numeroPresupuesto}`, 196, curHeaderY, { align: 'right' })
-  curHeaderY += 4.5
-
-  if (numeroExp) {
-    doc.setFont('Helvetica', 'bold')
-    doc.setFontSize(9.5)
-    doc.setTextColor(grayDark[0], grayDark[1], grayDark[2])
-    doc.text(`EXPEDIENTE: ${numeroExp}`, 196, curHeaderY, { align: 'right' })
-    curHeaderY += 4.5
-  }
+  doc.text(numero, 196, 27, { align: 'right' })
 
   doc.setFont('Helvetica', 'normal')
-  doc.setFontSize(8.5)
+  doc.setFontSize(9)
   doc.setTextColor(grayDark[0], grayDark[1], grayDark[2])
-  doc.text(`Fecha: ${fecha}`, 196, curHeaderY, { align: 'right' })
+  doc.text(`Fecha: ${fecha}`, 196, 33, { align: 'right' })
 
+  // Horizontal Divider
   doc.setDrawColor(15, 23, 42)
   doc.setLineWidth(0.5)
   doc.line(14, 44, 196, 44)
 
+  // Cliente Box
   const yCliente = 50
   doc.setFillColor(grayLight[0], grayLight[1], grayLight[2])
   doc.roundedRect(14, yCliente, 182, 32, 2, 2, 'F')
@@ -150,6 +109,7 @@ export function generatePresupuestoPDF(
   if (cliente?.email) infoLine += `Email: ${cliente.email}`
   if (infoLine) doc.text(infoLine, 18, yCliente + 17)
 
+  // Dirección y Localidad Auto-detectada por CP
   const autoLoc = cliente?.cp ? getLocalidadFromCP(cliente.cp) : (cliente?.localidad || '')
   let addrLine = ''
   if (cliente?.direccion) addrLine += cliente.direccion
@@ -164,6 +124,7 @@ export function generatePresupuestoPDF(
     doc.text(vehText, 18, yCliente + 25)
   }
 
+  // Table Header
   const yTable = 88
   doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2])
   doc.rect(14, yTable, 182, 8, 'F')
@@ -176,6 +137,7 @@ export function generatePresupuestoPDF(
   doc.text('PRECIO', 155, yTable + 5.5, { align: 'right' })
   doc.text('TOTAL', 190, yTable + 5.5, { align: 'right' })
 
+  // Table Rows
   let curY = yTable + 14
   doc.setFont('Helvetica', 'normal')
   doc.setFontSize(9)
@@ -202,6 +164,7 @@ export function generatePresupuestoPDF(
     })
   }
 
+  // Totales Box
   curY = Math.max(curY + 6, 170)
   if (curY > 240) {
     doc.addPage()
@@ -237,22 +200,53 @@ export function generatePresupuestoPDF(
   doc.text('TOTAL:', 124, curY + 23)
   doc.text(`${total.toFixed(2)} €`, 190, curY + 23, { align: 'right' })
 
+  // Observaciones
   if (presupuesto.observaciones) {
     const yObs = curY + 34
-    if (yObs < 275) {
+    if (yObs < 250) {
       doc.setFont('Helvetica', 'bold')
       doc.setFontSize(9)
-      doc.setTextColor(102, 102, 102)
+      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2])
       doc.text('Observaciones:', 14, yObs)
 
       doc.setFont('Helvetica', 'normal')
       doc.setFontSize(8.5)
-      doc.setTextColor(102, 102, 102)
+      doc.setTextColor(grayDark[0], grayDark[1], grayDark[2])
       const splitObs = doc.splitTextToSize(presupuesto.observaciones, 180)
       doc.text(splitObs, 14, yObs + 5)
     }
   }
 
+  // Recuadro informativo de envío al pie de página (Email / WhatsApp)
+  const fechaEnvioEmail = (presupuesto as any).enviado_email_at || (presupuesto.id ? localStorage.getItem(`presupuesto_${presupuesto.id}_email_at`) : null)
+  const fechaEnvioWA = (presupuesto as any).enviado_whatsapp_at || (presupuesto.id ? localStorage.getItem(`presupuesto_${presupuesto.id}_wa_at`) : null)
+
+  const fechaEnvio = fechaEnvioEmail || fechaEnvioWA || new Date().toISOString()
+  const viaEnvio = fechaEnvioWA && !fechaEnvioEmail ? 'WhatsApp' : 'Email'
+
+  let textoEnvio = ''
+  try {
+    const d = new Date(fechaEnvio)
+    const fechaFmt = d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    const horaFmt = d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+    textoEnvio = `Presupuesto enviado el ${fechaFmt} a las ${horaFmt} h por ${viaEnvio}`
+  } catch (e) {
+    textoEnvio = `Presupuesto enviado por ${viaEnvio}`
+  }
+
+  // Dibujar Recuadro de Envío destacado en el pie A4
+  doc.setFillColor(240, 253, 250) // Fondo verde menta / cian muy suave
+  doc.roundedRect(14, 266, 182, 11, 2, 2, 'F')
+  doc.setDrawColor(16, 185, 129) // Borde esmeralda / cian
+  doc.setLineWidth(0.4)
+  doc.roundedRect(14, 266, 182, 11, 2, 2, 'S')
+
+  doc.setFont('Helvetica', 'bold')
+  doc.setFontSize(8.5)
+  doc.setTextColor(6, 95, 70) // Color texto esmeralda oscuro
+  doc.text(textoEnvio.toUpperCase(), 105, 273, { align: 'center' })
+
+  // Footer inferior
   doc.setFont('Helvetica', 'normal')
   doc.setFontSize(7.5)
   doc.setTextColor(148, 163, 184)
@@ -265,8 +259,7 @@ export function generateFacturaPDF(
   factura: Partial<Factura>,
   cliente?: Cliente | null,
   vehiculo?: Vehiculo | null,
-  config?: Configuracion | null,
-  expediente?: string
+  config?: Configuracion | null
 ): jsPDF {
   const doc = new jsPDF({
     orientation: 'portrait',
@@ -281,11 +274,13 @@ export function generateFacturaPDF(
   const subtotal = total / 1.21
   const iva = total - subtotal
 
+  // Palette
   const primaryColor = [15, 23, 42]
-  const accentColor = [16, 185, 129]
+  const accentColor = [16, 185, 129] // Emerald green for invoices
   const grayDark = [51, 65, 85]
   const grayLight = [248, 250, 252]
 
+  // Header - Empresa
   doc.setFont('Helvetica', 'bold')
   doc.setFontSize(18)
   doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2])
@@ -299,37 +294,28 @@ export function generateFacturaPDF(
   if (config?.direccion) { doc.text(config.direccion, 14, yEmpresa); yEmpresa += 4 }
   if (config?.telefono) { doc.text(`Tel: ${config.telefono}`, 14, yEmpresa); yEmpresa += 4 }
   if (config?.email) { doc.text(`Email: ${config.email}`, 14, yEmpresa); yEmpresa += 4 }
-  renderLogoBnDerecha(doc, config, 92, 16, 22)
 
-  const numeroExp = expediente || (factura as any).expediente_id || ''
-
+  // Header - Factura Title
   doc.setFont('Helvetica', 'bold')
-  doc.setFontSize(20)
+  doc.setFontSize(22)
   doc.setTextColor(accentColor[0], accentColor[1], accentColor[2])
   doc.text('FACTURA', 196, 20, { align: 'right' })
 
   doc.setFontSize(11)
   doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2])
-  doc.text(`FACTURA: ${numero}`, 196, 26, { align: 'right' })
-
-  let yFecha = 32
-  if (numeroExp) {
-    doc.setFont('Helvetica', 'bold')
-    doc.setFontSize(9.5)
-    doc.setTextColor(grayDark[0], grayDark[1], grayDark[2])
-    doc.text(`EXPEDIENTE: ${numeroExp}`, 196, 31, { align: 'right' })
-    yFecha = 36
-  }
+  doc.text(numero, 196, 27, { align: 'right' })
 
   doc.setFont('Helvetica', 'normal')
-  doc.setFontSize(8.5)
+  doc.setFontSize(9)
   doc.setTextColor(grayDark[0], grayDark[1], grayDark[2])
-  doc.text(`Fecha: ${fecha}`, 196, yFecha, { align: 'right' })
+  doc.text(`Fecha: ${fecha}`, 196, 33, { align: 'right' })
 
+  // Divider
   doc.setDrawColor(15, 23, 42)
   doc.setLineWidth(0.5)
   doc.line(14, 44, 196, 44)
 
+  // Cliente Box
   const yCliente = 50
   doc.setFillColor(grayLight[0], grayLight[1], grayLight[2])
   doc.roundedRect(14, yCliente, 182, 32, 2, 2, 'F')
@@ -359,6 +345,7 @@ export function generateFacturaPDF(
     doc.text(vehText, 18, yCliente + 25)
   }
 
+  // Table Header
   const yTable = 88
   doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2])
   doc.rect(14, yTable, 182, 8, 'F')
@@ -371,6 +358,7 @@ export function generateFacturaPDF(
   doc.text('PRECIO', 155, yTable + 5.5, { align: 'right' })
   doc.text('TOTAL', 190, yTable + 5.5, { align: 'right' })
 
+  // Table Rows
   let curY = yTable + 14
   doc.setFont('Helvetica', 'normal')
   doc.setFontSize(9)
@@ -397,12 +385,14 @@ export function generateFacturaPDF(
     })
   }
 
+  // Totales Box & VERIFACTU QR Box
   curY = Math.max(curY + 6, 160)
   if (curY > 220) {
     doc.addPage()
     curY = 20
   }
 
+  // --- SECCIÓN VERIFACTU (Izquierda) ---
   try {
     const qrDataUrl = generateVerifactuQRDataUrlSync(factura, config)
     if (qrDataUrl) {
@@ -415,6 +405,7 @@ export function generateFacturaPDF(
     console.warn('QR verifactu sync warning:', e)
   }
 
+  // Título / Identificador VERI*FACTU
   doc.setFont('Helvetica', 'bold')
   doc.setFontSize(8.5)
   doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2])
@@ -425,12 +416,14 @@ export function generateFacturaPDF(
   doc.setTextColor(grayDark[0], grayDark[1], grayDark[2])
   doc.text('Cotejo y Verificación Tributaria AEAT', 43, curY + 11)
 
+  // Alusión a la norma que lo regula en cursiva y fuente tamaño 8 justo debajo del QR
   doc.setFont('Helvetica', 'italic')
   doc.setFontSize(8)
   doc.setTextColor(grayDark[0], grayDark[1], grayDark[2])
   const splitNormativa = doc.splitTextToSize(VERIFACTU_NORMATIVA_TEXT, 100)
   doc.text(splitNormativa, 14, curY + 31)
 
+  // --- CAJA DE TOTALES (Derecha) ---
   doc.setFillColor(grayLight[0], grayLight[1], grayLight[2])
   doc.roundedRect(120, curY, 76, 28, 2, 2, 'F')
   doc.setDrawColor(226, 232, 240)
@@ -455,22 +448,24 @@ export function generateFacturaPDF(
   doc.text('TOTAL FACTURA:', 124, curY + 23)
   doc.text(`${total.toFixed(2)} €`, 190, curY + 23, { align: 'right' })
 
+  // Observaciones
   if (factura.observaciones) {
     const yObs = curY + 44
     if (yObs < 265) {
       doc.setFont('Helvetica', 'bold')
       doc.setFontSize(9)
-      doc.setTextColor(102, 102, 102)
+      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2])
       doc.text('Observaciones:', 14, yObs)
 
       doc.setFont('Helvetica', 'normal')
       doc.setFontSize(8.5)
-      doc.setTextColor(102, 102, 102)
+      doc.setTextColor(grayDark[0], grayDark[1], grayDark[2])
       const splitObs = doc.splitTextToSize(factura.observaciones, 180)
       doc.text(splitObs, 14, yObs + 5)
     }
   }
 
+  // Footer
   doc.setFont('Helvetica', 'normal')
   doc.setFontSize(8)
   doc.setTextColor(148, 163, 184)
@@ -488,25 +483,7 @@ export function downloadPresupuestoPDF(
 ) {
   const doc = generatePresupuestoPDF(presupuesto, cliente, vehiculo, config, expediente)
   const numero = expediente || presupuesto.numero || 'PRES-0001'
-  const cName = (cliente?.nombre || 'CLIENTE').replace(/[^a-zA-Z0-9_-]/g, '_')
-  const vMat = (vehiculo?.matricula || '').replace(/[^a-zA-Z0-9_-]/g, '_')
-  const fileName = `${cName}${vMat ? `_${vMat}` : ''}_${numero}.pdf`
-  doc.save(fileName)
-}
-
-export function downloadFacturaPDF(
-  factura: Partial<Factura>,
-  cliente?: Cliente | null,
-  vehiculo?: Vehiculo | null,
-  config?: Configuracion | null,
-  expediente?: string
-) {
-  const doc = generateFacturaPDF(factura, cliente, vehiculo, config, expediente)
-  const numero = expediente || factura.numero || 'FAC-0001'
-  const cName = (cliente?.nombre || 'CLIENTE').replace(/[^a-zA-Z0-9_-]/g, '_')
-  const vMat = (vehiculo?.matricula || '').replace(/[^a-zA-Z0-9_-]/g, '_')
-  const fileName = `${cName}${vMat ? `_${vMat}` : ''}_${numero}.pdf`
-  doc.save(fileName)
+  doc.save(`Presupuesto_${numero}.pdf`)
 }
 
 export async function sendPresupuestoByEmail(
@@ -524,6 +501,7 @@ export async function sendPresupuestoByEmail(
   const doc = generatePresupuestoPDF(presupuesto, cliente, vehiculo, config, expediente)
   const pdfBlob = doc.output('blob')
 
+  // Obtener o generar token de invitación para el área de cliente
   let clientPortalUrl = ''
   try {
     if (cliente.id) {
@@ -543,8 +521,8 @@ export async function sendPresupuestoByEmail(
           token: token
         })
       }
-      const baseUrl = import.meta.env.VITE_APP_BASE_URL || (typeof window !== 'undefined' ? window.location.origin : 'https://gestarian.com')
-      clientPortalUrl = `${baseUrl}/cliente/${token}`
+      const origin = window.location.origin || 'http://localhost:5174'
+      clientPortalUrl = `${origin}/cliente/${token}`
     }
   } catch (e) {
     console.warn('Error resolviendo token de cliente para email:', e)
@@ -575,6 +553,21 @@ export async function sendPresupuestoByEmail(
   return result
 }
 
+export function downloadFacturaPDF(
+  factura: Partial<Factura>,
+  cliente?: Cliente | null,
+  vehiculo?: Vehiculo | null,
+  config?: Configuracion | null,
+  expediente?: string
+) {
+  const doc = generateFacturaPDF(factura, cliente, vehiculo, config, expediente)
+  const numero = factura.numero || 'FAC-0001'
+  doc.save(`Factura_${numero}.pdf`)
+}
+
+// ─────────────────────────────────────────────────────────────
+// 1. GENERADOR DE RECIBO DE ABONO (PARTICULARES)
+// ─────────────────────────────────────────────────────────────
 export function generateReciboAbonoPDF(
   factura: Partial<Factura>,
   abonoActual: number,
@@ -594,10 +587,11 @@ export function generateReciboAbonoPDF(
   const saldoPendiente = Math.max(0, totalReparacion - totalAbonadoAcumulado)
 
   const primaryColor = [15, 23, 42]
-  const accentColor = [2, 132, 199]
+  const accentColor = [2, 132, 199] // Azul
   const grayDark = [51, 65, 85]
   const grayLight = [248, 250, 252]
 
+  // Header Empresa
   doc.setFont('Helvetica', 'bold')
   doc.setFontSize(18)
   doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2])
@@ -611,8 +605,8 @@ export function generateReciboAbonoPDF(
   if (config?.direccion) { doc.text(config.direccion, 14, yEmpresa); yEmpresa += 4 }
   if (config?.telefono) { doc.text(`Tel: ${config.telefono}`, 14, yEmpresa); yEmpresa += 4 }
   if (config?.email) { doc.text(`Email: ${config.email}`, 14, yEmpresa); yEmpresa += 4 }
-  renderLogoBnDerecha(doc, config, 92, 16, 22)
 
+  // Título RECIBO DE ABONO
   doc.setFont('Helvetica', 'bold')
   doc.setFontSize(20)
   doc.setTextColor(accentColor[0], accentColor[1], accentColor[2])
@@ -627,10 +621,12 @@ export function generateReciboAbonoPDF(
   doc.setTextColor(grayDark[0], grayDark[1], grayDark[2])
   doc.text(`Fecha de emisión: ${fecha}`, 196, 33, { align: 'right' })
 
+  // Divider
   doc.setDrawColor(15, 23, 42)
   doc.setLineWidth(0.5)
   doc.line(14, 44, 196, 44)
 
+  // Datos Cliente & Vehículo
   const yCliente = 50
   doc.setFillColor(grayLight[0], grayLight[1], grayLight[2])
   doc.roundedRect(14, yCliente, 182, 32, 2, 2, 'F')
@@ -660,6 +656,7 @@ export function generateReciboAbonoPDF(
     doc.text(vehText, 18, yCliente + 25)
   }
 
+  // Resumen del Estado de la Reparación
   const yTable = 88
   doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2])
   doc.rect(14, yTable, 182, 8, 'F')
@@ -684,7 +681,8 @@ export function generateReciboAbonoPDF(
   doc.text(`${sumaPrevios.toFixed(2)} €`, 190, curY, { align: 'right' })
   curY += 8
 
-  doc.setFillColor(240, 253, 244)
+  // Cuadro destacado del nuevo abono
+  doc.setFillColor(240, 253, 244) // green-50
   doc.roundedRect(14, curY, 182, 12, 2, 2, 'F')
   doc.setDrawColor(34, 197, 94)
   doc.setLineWidth(0.3)
@@ -698,6 +696,7 @@ export function generateReciboAbonoPDF(
   doc.text(`${abonoActual.toFixed(2)} €`, 190, curY + 7.5, { align: 'right' })
   curY += 18
 
+  // Historial de Pagos
   if (cobrosPrevios.length > 0) {
     doc.setFont('Helvetica', 'bold')
     doc.setFontSize(9)
@@ -718,6 +717,7 @@ export function generateReciboAbonoPDF(
     curY += 4
   }
 
+  // Cuadro de Saldo Pendiente
   doc.setFillColor(grayLight[0], grayLight[1], grayLight[2])
   doc.roundedRect(120, curY, 76, 24, 2, 2, 'F')
   doc.setDrawColor(226, 232, 240)
@@ -735,6 +735,7 @@ export function generateReciboAbonoPDF(
   doc.text('IMPORTE PENDIENTE:', 124, curY + 16)
   doc.text(`${saldoPendiente.toFixed(2)} €`, 190, curY + 16, { align: 'right' })
 
+  // Nota legal
   doc.setFont('Helvetica', 'bold')
   doc.setFontSize(8.5)
   doc.setTextColor(100, 116, 139)
@@ -753,6 +754,9 @@ export function generateReciboAbonoPDF(
   return doc
 }
 
+// ─────────────────────────────────────────────────────────────
+// 1.B GENERADOR DE EXTRACTO DE CUENTA / REGULARIZACIÓN DE SALDO
+// ─────────────────────────────────────────────────────────────
 export function generateExtractoCuentaPDF(
   factura: Partial<Factura>,
   cobros: Cobro[],
@@ -774,6 +778,7 @@ export function generateExtractoCuentaPDF(
   const grayDark = [51, 65, 85]
   const grayLight = [248, 250, 252]
 
+  // Header Empresa
   doc.setFont('Helvetica', 'bold')
   doc.setFontSize(18)
   doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2])
@@ -786,8 +791,8 @@ export function generateExtractoCuentaPDF(
   if (config?.cif) { doc.text(`CIF: ${config.cif}`, 14, yEmpresa); yEmpresa += 4 }
   if (config?.direccion) { doc.text(config.direccion, 14, yEmpresa); yEmpresa += 4 }
   if (config?.telefono) { doc.text(`Tel: ${config.telefono}`, 14, yEmpresa); yEmpresa += 4 }
-  renderLogoBnDerecha(doc, config, 92, 16, 22)
 
+  // Título EXTRACTO DE CUENTA
   doc.setFont('Helvetica', 'bold')
   doc.setFontSize(18)
   doc.setTextColor(redAccent[0], redAccent[1], redAccent[2])
@@ -803,10 +808,12 @@ export function generateExtractoCuentaPDF(
   doc.setTextColor(grayDark[0], grayDark[1], grayDark[2])
   doc.text(`Fecha: ${fecha}`, 196, 39, { align: 'right' })
 
+  // Divider
   doc.setDrawColor(15, 23, 42)
   doc.setLineWidth(0.5)
   doc.line(14, 44, 196, 44)
 
+  // Datos Cliente & Vehículo
   const yCliente = 49
   doc.setFillColor(grayLight[0], grayLight[1], grayLight[2])
   doc.roundedRect(14, yCliente, 182, 28, 2, 2, 'F')
@@ -833,6 +840,7 @@ export function generateExtractoCuentaPDF(
     doc.text(`Vehículo: ${vehiculo.matricula} ${vehiculo.marca ? `(${vehiculo.marca} ${vehiculo.modelo || ''})` : ''}`, 18, yCliente + 24)
   }
 
+  // Estado del Expediente y Resumen Económico
   let curY = 84
   doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2])
   doc.rect(14, curY, 182, 8, 'F')
@@ -863,6 +871,7 @@ export function generateExtractoCuentaPDF(
   doc.setFontSize(12)
   doc.text(`${saldoPendiente.toFixed(2)} €`, 190, curY, { align: 'right' })
 
+  // Cronología de Abonos
   curY += 12
   doc.setFillColor(241, 245, 249)
   doc.rect(14, curY, 182, 7, 'F')
@@ -892,8 +901,9 @@ export function generateExtractoCuentaPDF(
     })
   }
 
+  // Recuadro de Regularización
   curY = Math.max(curY + 6, 175)
-  doc.setFillColor(254, 242, 242)
+  doc.setFillColor(254, 242, 242) // red-50
   doc.roundedRect(14, curY, 182, 38, 2, 2, 'F')
   doc.setDrawColor(239, 68, 68)
   doc.setLineWidth(0.4)
@@ -957,6 +967,9 @@ export async function sendExtractoCuentaByEmail(
   return result
 }
 
+// ─────────────────────────────────────────────────────────────
+// 2. GENERADOR DE FACTURA PROFORMA (EMPRESAS / ORGANISMOS)
+// ─────────────────────────────────────────────────────────────
 export function generateFacturaProformaPDF(
   factura: Partial<Factura>,
   cliente?: Cliente | null,
@@ -979,11 +992,12 @@ export function generateFacturaProformaPDF(
   const saldoPendiente = Math.max(0, total - totalAbonado)
 
   const primaryColor = [15, 23, 42]
-  const accentColor = [217, 119, 6]
+  const accentColor = [217, 119, 6] // Ámbar / Dorado
   const grayDark = [51, 65, 85]
   const grayLight = [248, 250, 252]
 
-  doc.setFillColor(254, 243, 199)
+  // BANNER SUPERIOR CENTRADO MUY DESTACADO: FACTURA PROFORMA
+  doc.setFillColor(254, 243, 199) // amber-100
   doc.rect(14, 10, 182, 10, 'F')
   doc.setDrawColor(245, 158, 11)
   doc.setLineWidth(0.5)
@@ -994,6 +1008,7 @@ export function generateFacturaProformaPDF(
   doc.setTextColor(180, 83, 9)
   doc.text('*** FACTURA PROFORMA — DOCUMENTO NO VÁLIDO PARA DEDUCCIÓN FISCAL ***', 105, 16.5, { align: 'center' })
 
+  // Header Empresa
   doc.setFont('Helvetica', 'bold')
   doc.setFontSize(16)
   doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2])
@@ -1007,8 +1022,8 @@ export function generateFacturaProformaPDF(
   if (config?.direccion) { doc.text(config.direccion, 14, yEmpresa); yEmpresa += 3.5 }
   if (config?.telefono) { doc.text(`Tel: ${config.telefono}`, 14, yEmpresa); yEmpresa += 3.5 }
   if (config?.email) { doc.text(`Email: ${config.email}`, 14, yEmpresa); yEmpresa += 3.5 }
-  renderLogoBnDerecha(doc, config, 92, 24, 20)
 
+  // Proforma Box Derecha
   doc.setFont('Helvetica', 'bold')
   doc.setFontSize(16)
   doc.setTextColor(accentColor[0], accentColor[1], accentColor[2])
@@ -1024,10 +1039,12 @@ export function generateFacturaProformaPDF(
   doc.setTextColor(grayDark[0], grayDark[1], grayDark[2])
   doc.text(`Fecha: ${fecha}`, 196, 44, { align: 'right' })
 
+  // Divider
   doc.setDrawColor(15, 23, 42)
   doc.setLineWidth(0.5)
   doc.line(14, 49, 196, 49)
 
+  // Cliente Box
   const yCliente = 53
   doc.setFillColor(grayLight[0], grayLight[1], grayLight[2])
   doc.roundedRect(14, yCliente, 182, 30, 2, 2, 'F')
@@ -1057,6 +1074,7 @@ export function generateFacturaProformaPDF(
     doc.text(vehText, 18, yCliente + 23)
   }
 
+  // Tabla Conceptos
   const yTable = 87
   doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2])
   doc.rect(14, yTable, 182, 7.5, 'F')
@@ -1087,6 +1105,7 @@ export function generateFacturaProformaPDF(
     curY += 6.5
   })
 
+  // Totales y Abonos
   curY = Math.max(curY + 4, 160)
   doc.setFillColor(grayLight[0], grayLight[1], grayLight[2])
   doc.roundedRect(110, curY, 86, 42, 2, 2, 'F')
@@ -1123,6 +1142,7 @@ export function generateFacturaProformaPDF(
   doc.text('SALDO PENDIENTE:', 114, curY + 36)
   doc.text(`${saldoPendiente.toFixed(2)} €`, 192, curY + 36, { align: 'right' })
 
+  // Footer Legal
   doc.setFont('Helvetica', 'normal')
   doc.setFontSize(7.5)
   doc.setTextColor(148, 163, 184)
@@ -1136,6 +1156,9 @@ export function generateFacturaProformaPDF(
   return doc
 }
 
+// ─────────────────────────────────────────────────────────────
+// 3. GENERADOR DE INFORME TRIMESTRAL PARA GESTORÍA
+// ─────────────────────────────────────────────────────────────
 export function generateInformeTrimestralPDF(
   quarter: number,
   year: number,
@@ -1155,6 +1178,7 @@ export function generateInformeTrimestralPDF(
 
   const resultadoIva = ivaRepercutido - ivaSoportado
 
+  // Header
   doc.setFont('Helvetica', 'bold')
   doc.setFontSize(18)
   doc.setTextColor(15, 23, 42)
@@ -1173,6 +1197,7 @@ export function generateInformeTrimestralPDF(
   doc.setLineWidth(0.5)
   doc.line(14, 32, 196, 32)
 
+  // Resumen Fiscal
   doc.setFillColor(248, 250, 252)
   doc.roundedRect(14, 38, 182, 45, 2, 2, 'F')
   doc.setDrawColor(226, 232, 240)
@@ -1199,6 +1224,9 @@ export function generateInformeTrimestralPDF(
   return doc
 }
 
+// ─────────────────────────────────────────────────────────────
+// 4. DESCARGAS Y ENVÍOS POR EMAIL AUTOMÁTICOS
+// ─────────────────────────────────────────────────────────────
 export function downloadReciboAbonoPDF(
   factura: Partial<Factura>,
   abonoActual: number,
@@ -1288,9 +1316,12 @@ export async function sendFacturaByEmail(
   }
 
   const numero = factura.numero || 'FAC-0001'
+  
+  // 1. Generar PDF en memoria con jsPDF
   const doc = generateFacturaPDF(factura, cliente, vehiculo, config, expediente)
   const pdfBlob = doc.output('blob')
 
+  // 2. Enviar mediante COMMUNICATION SERVICE
   const result = await sendInvoice({
     to: cliente.email,
     documentId: factura.id,
@@ -1313,3 +1344,4 @@ export async function sendFacturaByEmail(
 
   return result
 }
+

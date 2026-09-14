@@ -1,3 +1,4 @@
+// src/hooks/useClima.ts
 import { useEffect, useState } from 'react';
 
 export const useClima = () => {
@@ -21,7 +22,7 @@ export const useClima = () => {
       }
     }
 
-    if (typeof navigator !== 'undefined' && 'geolocation' in navigator) {
+    if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           fetchClima(position.coords.latitude, position.coords.longitude);

@@ -13,6 +13,7 @@ export function playSuccessChime() {
 
     const now = ctx.currentTime;
 
+    // Primer tono (E5 - 659.25 Hz)
     const osc1 = ctx.createOscillator();
     const gain1 = ctx.createGain();
     osc1.type = 'sine';
@@ -24,6 +25,7 @@ export function playSuccessChime() {
     osc1.start(now);
     osc1.stop(now + 0.35);
 
+    // Segundo tono (A5 - 880 Hz) con brillo armónico
     const osc2 = ctx.createOscillator();
     const gain2 = ctx.createGain();
     osc2.type = 'sine';
@@ -35,28 +37,14 @@ export function playSuccessChime() {
     osc2.start(now + 0.12);
     osc2.stop(now + 0.65);
   } catch (e) {
+    // Si la política de audio del navegador lo bloquea, no interrumpe la app
     console.warn('Audio feedback failed:', e);
   }
 }
 
-export function playSound(type = 'click') {
-  try {
-    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioContextClass) return;
-    const ctx = new AudioContextClass();
-    if (ctx.state === 'suspended') ctx.resume();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.frequency.setValueAtTime(type === 'error' ? 250 : 600, ctx.currentTime);
-    gain.gain.setValueAtTime(0.1, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.15);
-  } catch (e) {}
-}
-
+/**
+ * Reproduce un sonido de éxito prolongado durante la animación de transición de parada (0.5s)
+ */
 export function playLongSuccessChime() {
   try {
     const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
@@ -70,6 +58,7 @@ export function playLongSuccessChime() {
     const now = ctx.currentTime;
     const duration = 0.55;
 
+    // Acorde mayor brillante: C5, E5, G5, C6
     const freqs = [523.25, 659.25, 783.99, 1046.50];
     freqs.forEach((freq, i) => {
       const osc = ctx.createOscillator();
@@ -88,6 +77,10 @@ export function playLongSuccessChime() {
   }
 }
 
+/**
+ * Sonido sutil y elegante de mecanismo de reloj / ajuste horario (Precision Timepiece Clockwork Tick).
+ * Genera un micro-clic acústico de escape de reloj suizo muy agradable y discreto.
+ */
 let clockAudioCtx: AudioContext | null = null;
 
 export function playTimepickerTickSound() {
@@ -102,8 +95,9 @@ export function playTimepickerTickSound() {
     if (ctx.state === 'suspended') ctx.resume();
 
     const now = ctx.currentTime;
-    const duration = 0.04;
+    const duration = 0.04; // 40ms micro-clic de reloj
 
+    // 1. Clic metálico sutil de escape de reloj (agudo nítido)
     const osc1 = ctx.createOscillator();
     const gain1 = ctx.createGain();
     osc1.type = 'sine';
@@ -118,6 +112,7 @@ export function playTimepickerTickSound() {
     osc1.start(now);
     osc1.stop(now + duration);
 
+    // 2. Micro-impulso resonante de mecanismo (cuerpo de rueda horaria dentada)
     const osc2 = ctx.createOscillator();
     const gain2 = ctx.createGain();
     osc2.type = 'triangle';
@@ -136,6 +131,9 @@ export function playTimepickerTickSound() {
   }
 }
 
+/**
+ * Sintetiza el sonido característico de sintonización de radio analógica antigua
+ */
 let radioAudioCtx: AudioContext | null = null;
 
 export function playRadioTuningStatic() {
@@ -153,8 +151,9 @@ export function playRadioTuningStatic() {
     }
 
     const now = ctx.currentTime;
-    const duration = 0.18;
+    const duration = 0.18; // Ráfaga de sintonización corta y reactiva al girar
 
+    // 1. Buffer de Ruido Blanco / Estática
     const bufferSize = ctx.sampleRate * duration;
     const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
     const output = noiseBuffer.getChannelData(0);
@@ -165,6 +164,7 @@ export function playRadioTuningStatic() {
     const whiteNoise = ctx.createBufferSource();
     whiteNoise.buffer = noiseBuffer;
 
+    // Filtro pasa banda para la estática analógica (barrido de frecuencia de dial)
     const bandpass = ctx.createBiquadFilter();
     bandpass.type = 'bandpass';
     const randomFreq = 800 + Math.random() * 2200;
@@ -183,6 +183,7 @@ export function playRadioTuningStatic() {
     whiteNoise.start(now);
     whiteNoise.stop(now + duration);
 
+    // 2. Silbido Heterodino (Heterodyne whistle / onda corta de búsqueda)
     const osc = ctx.createOscillator();
     const oscGain = ctx.createGain();
     osc.type = 'triangle';
@@ -205,6 +206,9 @@ export function playRadioTuningStatic() {
   }
 }
 
+/**
+ * Sonido de clic sutil de obturador de cámara fotográfica
+ */
 export function playCameraShutterSound() {
   try {
     const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
@@ -214,6 +218,7 @@ export function playCameraShutterSound() {
 
     const now = ctx.currentTime;
 
+    // 1. Clic inicial mecánico del obturador (primer impulso agudo)
     const osc1 = ctx.createOscillator();
     const gain1 = ctx.createGain();
     osc1.type = 'triangle';
@@ -226,6 +231,7 @@ export function playCameraShutterSound() {
     osc1.start(now);
     osc1.stop(now + 0.04);
 
+    // 2. Ruido sutil del paso de cortinilla
     const bufferSize = ctx.sampleRate * 0.06;
     const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
     const output = noiseBuffer.getChannelData(0);
@@ -247,6 +253,7 @@ export function playCameraShutterSound() {
     noise.start(now + 0.02);
     noise.stop(now + 0.08);
 
+    // 3. Clic final de cierre
     const osc2 = ctx.createOscillator();
     const gain2 = ctx.createGain();
     osc2.type = 'sine';

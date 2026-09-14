@@ -1,18 +1,5 @@
 {
   "projects": {
     "default": "gestarian2"
-  },
-  "targets": {
-    "gestarian2": {
-      "hosting": {
-        "app": [
-          "gestarian2"
-        ],
-        "lite": [
-          "lite-gestarian"
-        ]
-      }
-    }
-  },
-  "etags": {}
+  }
 }

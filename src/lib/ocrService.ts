@@ -1,15 +1,13 @@
+import Tesseract from 'tesseract.js';
+
 export async function extractTextFromImage(imageUrl: string): Promise<string> {
   try {
-    // @ts-ignore
-    const Tesseract = await import(/* @vite-ignore */ 'tesseract.js').catch(() => null);
-    if (Tesseract && (Tesseract.default || Tesseract.recognize)) {
-      const recognizer = Tesseract.default?.recognize || Tesseract.recognize;
-      const result = await recognizer(imageUrl, 'spa');
-      return result?.data?.text || '';
-    }
-    return '';
+    const result = await Tesseract.recognize(imageUrl, 'spa', {
+      logger: m => console.log(m)
+    });
+    return result.data.text;
   } catch (error) {
-    console.warn('OCR Error or Tesseract unavailable:', error);
-    return '';
+    console.error('OCR Error:', error);
+    throw new Error('No se pudo extraer el texto de la imagen.');
   }
 }

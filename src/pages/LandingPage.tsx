@@ -219,7 +219,7 @@ export const LandingPage: React.FC = () => {
               onClick={() => navigate('/login')}
               className="px-6 py-3 lg:px-8 lg:py-3.5 text-base lg:text-lg font-bold rounded-full bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white shadow-lg shadow-indigo-600/30 hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center gap-2"
             >
-              <span>Acceso Clientes</span>
+              <span>Acceso a Roles</span>
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
@@ -234,7 +234,7 @@ export const LandingPage: React.FC = () => {
             className="inline-flex items-center gap-2 lg:gap-3 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 mb-6 lg:mb-8"
           >
             <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
-            <span className="text-xs lg:text-sm font-medium tracking-wide">Tecnología y automatización a tu servicio</span>
+            <span className="text-xs lg:text-sm font-medium tracking-wide">Asistente de IA y automatización a tu servicio</span>
           </motion.div>
 
           <motion.h1 
@@ -243,9 +243,9 @@ export const LandingPage: React.FC = () => {
             transition={{ duration: 0.4, delay: 0.1 }}
             className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6 leading-[1.15]"
           >
-            Que el papeleo no te robe <br className="hidden md:block" />
+            Automatiza tu documentación y <br className="hidden md:block" />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-blue-500 to-cyan-400">
-              tu tiempo libre
+              recupera tu tiempo libre
             </span>
           </motion.h1>
 
@@ -253,15 +253,16 @@ export const LandingPage: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: expandedCard ? 0.2 : 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.2 }}
-            className="text-base sm:text-lg md:text-xl text-slate-300 max-w-3xl mb-8 leading-relaxed font-normal"
+            className="text-base sm:text-lg md:text-xl text-slate-300 max-w-3xl mb-8 leading-relaxed font-normal mx-auto"
           >
-            Profesionales y empresas no tienen que perder su tiempo con papeleos ni burocracia: la tecnología ya hace esto por ti y nosotros te la ofrecemos. 
-            <span className="text-slate-400 block mt-2">
-              Tú solo trabaja y descansa merecidamente. Disfruta de tu tiempo con quien tú quieras.
+            Ahorra horas de trabajo a la semana automatizando la documentación de tu empresa con GESTARIAN. 
+            Una plataforma asistida por IA y accesible 100% online con solo el móvil.
+            <span className="text-slate-400 block mt-2 font-medium">
+              Tu oficina en la nube con acceso total en todo momento, estés donde estés.
             </span>
           </motion.p>
 
-          {/* Botón CTA Acceso Clientes x2 */}
+          {/* Botón CTA Acceder x2 */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: expandedCard ? 0.2 : 1, y: 0 }}
@@ -272,7 +273,7 @@ export const LandingPage: React.FC = () => {
               onClick={() => navigate('/login')}
               className="inline-flex items-center gap-3 px-8 py-4 sm:px-10 sm:py-5 text-lg sm:text-xl font-extrabold rounded-2xl bg-gradient-to-r from-indigo-500 via-blue-600 to-cyan-500 hover:from-indigo-400 hover:to-cyan-400 text-white shadow-2xl shadow-indigo-500/30 hover:scale-105 active:scale-95 transition-all cursor-pointer border border-indigo-400/30"
             >
-              <span>Acceso Clientes</span>
+              <span>Acceso a Roles</span>
               <ChevronRight className="w-6 h-6" />
             </button>
           </motion.div>
